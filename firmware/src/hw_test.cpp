@@ -3,19 +3,16 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266httpUpdate.h>
-
 #include <user_interface.h>
-
-#include "rtc.hpp"
 
 #include "button.hpp"
 #include "display.hpp"
+#include "rtc.hpp"
 
 #define APSSID "foxie"
 #define APPSK "schwarz12345"  // this is a spaceballs joke
 #define FIRMWARE_LOCATION "https://foxieproducts.com/firmware/cardclock"
 
-void TestPixels();
 void ShowTestStatus();
 void DownloadFirmware();
 
@@ -25,8 +22,9 @@ Button g_btnLeft(Button::PIN_BTN_LEFT, INPUT_PULLUP);
 Button g_btnRight(Button::PIN_BTN_RIGHT, INPUT_PULLUP);
 
 Display g_display;
-
+Rtc g_rtc;
 ESP8266WiFiMulti g_WiFiMulti;
+
 struct TestResults {
     bool up{false};
     bool down{false};
@@ -35,8 +33,6 @@ struct TestResults {
     bool rtc{false};
     bool Done() { return up && down && left && right && rtc; }
 } g_results;
-
-Rtc g_rtc;
 
 void setup() {
     // hold RIGHT button on boot to erase WiFi settings
