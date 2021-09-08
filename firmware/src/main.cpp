@@ -31,7 +31,8 @@ void setup() {
         rtc.Update();
         menuMgr.Update();
 
-        disp.SetBrightness(disp.GetBrightness());
+        disp.SetBrightness(
+            map(disp.GetBrightness(), 0, 100, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
         disp.Show();
 
         delay(5);

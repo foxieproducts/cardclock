@@ -28,6 +28,9 @@ enum Display_e {
     FIRST_ROUND_LED = WIDTH * HEIGHT,
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
+    MIN_BRIGHTNESS = 4,
+    MAX_BRIGHTNESS = 150,
+
     LEDS_PIN = 15,
 };
 
@@ -55,7 +58,7 @@ class Display {
   public:
     Display() {
         m_leds.begin();
-        m_leds.setBrightness(LightSensor::MIN_BRIGHTNESS);
+        m_leds.setBrightness(MIN_BRIGHTNESS);
     }
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };

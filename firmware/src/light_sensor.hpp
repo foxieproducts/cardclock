@@ -18,9 +18,6 @@ class LightSensor {
         ADC_SAMPLES = 4,
         ADC_CLOCK_DIVIDER = 8,
 
-        MIN_BRIGHTNESS = 4,
-        MAX_BRIGHTNESS = 150,
-
         HISTORY_SIZE = 40,
         MAX_JITTER = 4,
     };
@@ -41,12 +38,12 @@ class LightSensor {
             average += m_samples[i];
         }
         average /= ADC_SAMPLES;
-        average = map(average, 10, 600, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-        average = constrain(average, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+        average = map(average, 10, 600, 0, 100);
+        average = constrain(average, 0, 100);
 
         if ((uint16_t)average > m_history[m_pos] + MAX_JITTER ||
-            (uint16_t)average < m_history[m_pos] - MAX_JITTER ||
-            average == MIN_BRIGHTNESS || average == MAX_BRIGHTNESS) {
+            (uint16_t)average < m_history[m_pos] - MAX_JITTER || average == 0 ||
+            average == 100) {
             m_history[m_pos] = average;
         }
         if (m_pos++ == HISTORY_SIZE) {
