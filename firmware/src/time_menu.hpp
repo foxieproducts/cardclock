@@ -164,6 +164,10 @@ class TimeMenu : public Menu {
         m_display.ClearRoundLEDs(DARK_GRAY);
         m_display.DrawPixel(85 + m_rtc.Get12(m_hour) - 1,
                             m_mode == SET_HOUR ? color : WHITE);
+
+        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_second),
+                            m_mode == SET_MINUTE ? color : BLUE);
+
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_minute),
                             m_mode == SET_MINUTE ? color : WHITE);
     }

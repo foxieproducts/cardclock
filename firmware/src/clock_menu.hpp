@@ -49,6 +49,11 @@ class ClockMenu : public Menu {
         m_display.ClearRoundLEDs(DARK_GRAY);
         m_display.DrawPixel(85 + m_rtc.Hour12() - 1,
                             Display::ColorWheel(m_colorWheel));
+
+        m_display.DrawPixel(
+            97 + m_display.GetMinuteLED(m_rtc.Second()),
+            Display::ScaleBrightness(Display::ColorWheel(m_colorWheel), 0.5f));
+
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Minute()),
                             Display::ColorWheel(m_colorWheel));
     }

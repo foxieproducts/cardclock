@@ -28,19 +28,17 @@ class LightSensor {
     int m_pos{0};
 
   public:
-    LightSensor() { Get(); }
+    LightSensor() {
+        int32_t average = GetADCAverage();
+        for (int i = 0; i < HISTORY_SIZE; ++i) {
+            m_history[i] = average;
+        }
+    }
 
     uint16_t Get() {
-        ReadADC();
+        int32_t average = GetADCAverage();
 
-        uint32_t average = 0;
-        for (int i = 0; i < ADC_SAMPLES; i++) {
-            average += m_samples[i];
-        }
-        average /= ADC_SAMPLES;
-        average = map(average, 10, 600, 0, 100);
-        average = constrain(average, 0, 100);
-
+        // average a bit more
         if ((uint16_t)average > m_history[m_pos] + MAX_JITTER ||
             (uint16_t)average < m_history[m_pos] - MAX_JITTER || average == 0 ||
             average == 100) {
@@ -60,6 +58,18 @@ class LightSensor {
     }
 
   private:
+    uint16_t GetADCAverage() {
+        ReadADC();
+        int32_t average = 0;
+        for (int i = 0; i < ADC_SAMPLES; i++) {
+            average += m_samples[i];
+        }
+        average /= ADC_SAMPLES;
+        average = map(average, 10, 600, 0, 100);
+        average = constrain(average, 0, 100);
+        return average;
+    }
+
     void ReadADC() {
         system_soft_wdt_stop();
         ets_intr_lock();
