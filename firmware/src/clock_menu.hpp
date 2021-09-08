@@ -9,7 +9,7 @@ class ClockMenu : public Menu {
 
   public:
     ClockMenu(Display& display, Rtc& rtc) : Menu(display), m_rtc(rtc) {
-        m_title = "CLOCK";
+        // m_title = "CLOCK";
     }
 
     virtual void Update() {
@@ -33,10 +33,24 @@ class ClockMenu : public Menu {
 
   private:
     void DrawClockDigits() {
-        char text[10];
-        sprintf(text, "%2d:%02d", m_rtc.Hour12(), m_rtc.Minute());
         m_display.Clear();
+
+        char text[10];
+        sprintf(text, "%2d", m_rtc.Hour12());
         m_display.DrawText(0, text, Display::ColorWheel(m_colorWheel));
+
+        sprintf(text, "%02d", m_rtc.Minute());
+        m_display.DrawText(10, text, Display::ColorWheel(m_colorWheel));
+
+        if (m_rtc.Second() % 2) {
+            m_display.DrawChar(8, ':', Display::ColorWheel(m_colorWheel));
+        }
+
+        m_display.ClearRoundLEDs(DARK_GRAY);
+        m_display.DrawPixel(85 + m_rtc.Hour12() - 1,
+                            Display::ColorWheel(m_colorWheel));
+        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Minute()),
+                            Display::ColorWheel(m_colorWheel));
     }
 
     void DrawAnalog() {}

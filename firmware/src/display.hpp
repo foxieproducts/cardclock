@@ -18,24 +18,41 @@ enum Colors {
     DARK_RED = 0x7F0000,
     DARK_GREEN = 0x007F00,
     DARK_BLUE = 0x00007F,
+    DARK_GRAY = 0x3F3F3F,
+};
+
+enum Display_e {
+    WIDTH = 17,
+    HEIGHT = 5,
+    ROUND_LEDS = 24,
+    FIRST_ROUND_LED = WIDTH * HEIGHT,
+    TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
+
+    LEDS_PIN = 15,
 };
 
 class Display {
   private:
-    Adafruit_NeoPixel m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
+    // Adafruit_NeoPixel::setBrightness() is destructive to the pixel
+    // data, pixel read operations at low brightness behave poorly. Having this
+    // extra buffer solves this problem, which allows better horizontal
+    // scrolling in all brightness conditions
+    class PixelsWithBuffer : public Adafruit_NeoPixel {
+        using Adafruit_NeoPixel::Adafruit_NeoPixel;
+        uint32_t m_pixels[TOTAL_LEDS] = {0};
+
+      public:
+        void setPixelColor(uint16_t n, uint32_t c) {
+            m_pixels[n] = c;
+            ((Adafruit_NeoPixel*)this)->setPixelColor(n, c);
+        }
+        uint32_t getPixelColor(uint16_t n) { return m_pixels[n]; }
+    };
+
+    PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
 
   public:
-    enum {
-        WIDTH = 17,
-        HEIGHT = 5,
-        ROUND_LEDS = 24,
-        TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
-
-        OFF_COLOR = 0x000000,
-        LEDS_PIN = 15,
-    };
-
     Display() {
         m_leds.begin();
         m_leds.setBrightness(LightSensor::MIN_BRIGHTNESS);
@@ -43,22 +60,40 @@ class Display {
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
 
-    void Show() { m_leds.show(); }
-    void Clear(int color = OFF_COLOR, const bool includeRoundLEDs = false) {
+    void Show() {
+        system_soft_wdt_stop();
+        ets_intr_lock();
+        noInterrupts();
+
+        m_leds.show();
+
+        interrupts();
+        ets_intr_unlock();
+        system_soft_wdt_restart();
+    }
+
+    void Clear(int color = BLACK, const bool includeRoundLEDs = false) {
         int num = WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
         for (int i = 0; i < num; ++i) {
             m_leds.setPixelColor(i, color);
         }
     }
 
+    void ClearRoundLEDs(int color = BLACK) {
+        for (int i = FIRST_ROUND_LED; i < FIRST_ROUND_LED + ROUND_LEDS; ++i) {
+            m_leds.setPixelColor(i, color);
+        }
+    }
+
     void DrawTextScrolling(String text, int color, int delayMs = 25) {
         const auto length = DrawText(0, text, color);
-        for (int i = WIDTH; i > -length; --i) {
+        for (int i = WIDTH; i > WIDTH - length; --i) {
             Clear();
             DrawText(i, text, color);
             Show();
             delay(delayMs);
         }
+        delay(250);
     }
 
     void DrawPixel(const int num, const int color) {
@@ -75,6 +110,66 @@ class Display {
             x += charWidth;
         }
         return textWidth;
+    }
+
+    void ScrollHorizontal(const int num,
+                          const int direction,
+                          const int delayMs = 15) {
+        for (int i = 0; i < num; ++i) {
+            MoveHorizontal(direction);
+            Show();
+            delay(delayMs);
+        }
+    }
+
+    void MoveHorizontal(int num) {
+        auto movePixel = [&](int row, int col) {
+            int color = m_leds.getPixelColor(row * WIDTH + col);
+
+            const int x = col + num;
+            if (x > 0 && x < WIDTH) {
+                DrawPixel(row * WIDTH + x, color);
+                DrawPixel(row * WIDTH + col, BLACK);
+            }
+        };
+
+        for (int row = 0; row < HEIGHT; ++row) {
+            if (num < 0) {
+                for (int col = 0; col < WIDTH; ++col) {
+                    movePixel(row, col);
+                }
+            } else {
+                for (int col = WIDTH - 1; col >= 0; --col) {
+                    movePixel(row, col);
+                }
+            }
+        }
+    }
+
+    int GetMinuteLED(const int minute) {
+        if (minute > 54)
+            return 11;
+        if (minute > 49)
+            return 10;
+        if (minute > 44)
+            return 9;
+        if (minute > 39)
+            return 8;
+        if (minute > 34)
+            return 7;
+        if (minute > 29)
+            return 6;
+        if (minute > 24)
+            return 5;
+        if (minute > 19)
+            return 4;
+        if (minute > 14)
+            return 3;
+        if (minute > 9)
+            return 2;
+        if (minute > 4)
+            return 1;
+        return 0;
     }
 
     int DrawChar(const int x, char character, int color) {

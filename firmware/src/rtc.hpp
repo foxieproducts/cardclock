@@ -15,8 +15,6 @@ class Rtc {
   public:
     Rtc() {}
 
-    // Rtc_Pcf8563& Get() { return m_rtc; }
-
     bool IsInitialized() { return m_isInitialized; }
 
     void Update(bool force = false) {
@@ -31,13 +29,22 @@ class Rtc {
     }
 
     int Hour() { return m_rtc.getHour(); }
-    int Hour12() {
-        const int hour = m_rtc.getHour();
-        return hour > 12 ? hour - 12 : hour;
-    }
+    int Hour12() { return Get12(m_rtc.getHour()); }
     int Minute() { return m_rtc.getMinute(); }
     int Second() { return m_rtc.getSecond(); }
     int Millis() { return millis() - m_millisAtInterrupt; }
+    void SetTime(byte hour, byte minute, byte second) {
+        m_rtc.setTime(hour, minute, second);
+    }
+
+    int Get12(int hour) {
+        if (hour > 12) {
+            hour -= 12;
+        } else if (hour == 0) {
+            hour = 12;
+        }
+        return hour;
+    }
 
   private:
     void Initialize() {

@@ -9,6 +9,7 @@
 #include "foxie_esp12.hpp"
 
 #include "clock_menu.hpp"
+#include "test_menu.hpp"
 #include "time_menu.hpp"
 
 void setup() {
@@ -16,8 +17,9 @@ void setup() {
     Display disp;
     disp.SetBrightness(5);
 
-    MenuManager menuMgr(disp);
+    MenuManager menuMgr;
 
+    menuMgr.Add(std::make_shared<TestMenu>(disp));
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc));
     menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc));
 
@@ -29,7 +31,10 @@ void setup() {
         rtc.Update();
         menuMgr.Update();
 
-        yield();
+        disp.SetBrightness(disp.GetBrightness());
+        disp.Show();
+
+        delay(5);
     }
 }
 

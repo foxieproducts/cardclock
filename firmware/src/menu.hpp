@@ -15,19 +15,23 @@ class Menu {
     Menu(Display& display) : m_display(display) {}
 
     virtual void ShowTitle(const int color) {
-        m_display.DrawTextScrolling(m_title, color);
+        if (!m_title.isEmpty()) {
+            m_display.DrawTextScrolling(m_title, color);
+        }
     }
 
     virtual void Update() = 0;
+    virtual void Begin() {}
     virtual bool Up(const Button::Event_e evt) { return false; }
     virtual bool Down(const Button::Event_e evt) { return false; }
     virtual bool Left(const Button::Event_e evt) { return false; }
     virtual bool Right(const Button::Event_e evt) { return false; }
+
+    virtual bool HasSubmenu() { return false; }
 };
 
 class MenuManager {
   private:
-    Display& m_display;
     std::vector<std::shared_ptr<Menu>> m_menus;
     int m_pos{0};
 
@@ -44,7 +48,7 @@ class MenuManager {
     Button m_btnRight{PIN_BTN_RIGHT, INPUT_PULLUP};
 
   public:
-    MenuManager(Display& display) : m_display(display) {
+    MenuManager() {
         m_btnUp.config.canRepeat = true;
         m_btnDown.config.canRepeat = true;
         m_btnLeft.config.canRepeat = true;
@@ -57,18 +61,24 @@ class MenuManager {
             m_menus[m_pos]->Down(evt);
         };
         m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
-            if (!m_menus[m_pos]->Left(evt) && evt == Button::PRESS) {
+            const bool handled = m_menus[m_pos]->Left(evt);
+            if (!handled && evt == Button::PRESS) {
                 if (m_pos-- == 0) {
                     m_pos = m_menus.size() - 1;
                 }
+                // m_display.ScrollHorizontal(Display::WIDTH, 1);
+                m_menus[m_pos]->Begin();
                 m_menus[m_pos]->ShowTitle(PURPLE);
             }
         };
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
-            if (!m_menus[m_pos]->Right(evt) && evt == Button::PRESS) {
+            const bool handled = m_menus[m_pos]->Right(evt);
+            if (!handled && evt == Button::PRESS) {
                 if (++m_pos == (int)m_menus.size()) {
                     m_pos = 0;
                 }
+                // m_display.ScrollHorizontal(Display::WIDTH, -1);
+                m_menus[m_pos]->Begin();
                 m_menus[m_pos]->ShowTitle(BLUE);
             }
         };
@@ -82,7 +92,5 @@ class MenuManager {
     void Update() {
         Button::Update();
         m_menus[m_pos]->Update();
-        m_display.SetBrightness(m_display.GetBrightness());
-        m_display.Show();
     }
 };

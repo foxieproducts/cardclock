@@ -1,34 +1,170 @@
 #pragma once
+#include "elapsed_time.hpp"
 #include "menu.hpp"
 #include "rtc.hpp"
 
 class TimeMenu : public Menu {
   private:
-    Rtc& m_rtc;
-    uint8_t m_colorWheel{0};
+    enum Mode_e {
+        SET_SECOND,
+        SET_MINUTE,
+        SET_HOUR,
+    };
 
-    String m_mode{"RTC"};
+    Rtc& m_rtc;
+    Mode_e m_mode{SET_MINUTE};
+    int m_hour, m_minute, m_second;
+    bool m_timeChanged{false};
+    bool m_secondsChanged{false};
+    ElapsedTime m_blinkTime;
 
   public:
     TimeMenu(Display& display, Rtc& rtc) : Menu(display), m_rtc(rtc) {
-        m_title = "SET TIME";
+        // m_title = "SET TIME";
     }
 
-    virtual void Update() { m_display.DrawText(0, m_mode, GREEN); }
+    virtual void Update() {
+        m_display.Clear();
+
+        if (!m_timeChanged) {
+            m_hour = m_rtc.Hour();
+            m_minute = m_rtc.Minute();
+        }
+
+        if (!m_secondsChanged) {
+            m_second = m_rtc.Second();
+        }
+
+        DrawClockDigits();
+    }
+
+    virtual void Begin() {
+        m_mode = SET_HOUR;
+        m_timeChanged = false;
+        m_secondsChanged = false;
+    }
 
     virtual bool Up(const Button::Event_e evt) {
-        if (evt == Button::PRESS) {
-            m_display.DrawTextScrolling("Up pressed", GREEN);
+        if (evt == Button::PRESS || evt == Button::REPEAT) {
+            m_timeChanged = true;
+            switch (m_mode) {
+                case SET_HOUR:
+                    if (++m_hour > 23) {
+                        m_hour = 0;
+                    }
+                    break;
+                case SET_MINUTE:
+                    if (++m_minute > 59) {
+                        m_minute = 0;
+                    }
+                    break;
+                case SET_SECOND:
+                    m_secondsChanged = true;
+                    if (++m_second > 59) {
+                        m_second = 0;
+                    }
+                    break;
+            }
         }
         return true;
     }
 
     virtual bool Down(const Button::Event_e evt) {
+        if (evt == Button::PRESS || evt == Button::REPEAT) {
+            m_timeChanged = true;
+            switch (m_mode) {
+                case SET_HOUR:
+                    if (m_hour-- == 0) {
+                        m_hour = 23;
+                    }
+                    break;
+                case SET_MINUTE:
+                    if (m_minute-- == 0) {
+                        m_minute = 59;
+                    }
+                    break;
+                case SET_SECOND:
+                    m_secondsChanged = true;
+                    if (m_second-- == 0) {
+                        m_second = 59;
+                    }
+                    break;
+            }
+        }
+        return true;
+    }
+
+    virtual bool Left(const Button::Event_e evt) {
         if (evt == Button::PRESS) {
-            m_display.DrawTextScrolling("Down pressed", GREEN);
+            if (m_mode == SET_HOUR) {
+                SetRTCIfTimeChanged();
+                // exit by allowing MenuManager to handle button press
+                return false;
+            } else if (m_mode == SET_MINUTE) {
+                m_mode = SET_HOUR;
+            } else if (m_mode == SET_SECOND) {
+                m_display.ScrollHorizontal(9, 1);
+                m_mode = SET_MINUTE;
+            }
+        }
+        return true;
+    }
+
+    virtual bool Right(const Button::Event_e evt) {
+        if (evt == Button::PRESS) {
+            if (m_mode == SET_HOUR) {
+                m_mode = SET_MINUTE;
+            } else if (m_mode == SET_MINUTE) {
+                m_display.ScrollHorizontal(9, -1);
+                m_mode = SET_SECOND;
+            } else if (m_mode == SET_SECOND) {
+                m_display.ScrollHorizontal(9, 1);
+                DrawClockDigits();
+                SetRTCIfTimeChanged();
+                // exit by allowing MenuManager to handle button press
+                return false;
+            }
         }
         return true;
     }
 
   private:
+    void SetRTCIfTimeChanged() {
+        if (m_timeChanged) {
+            m_rtc.SetTime(m_hour, m_minute,
+                          m_secondsChanged ? m_second : m_rtc.Second());
+        }
+    }
+
+    void DrawClockDigits() {
+        m_display.Clear(BLACK);
+
+        int color = m_blinkTime.Ms() < 500 ? GREEN : 0x00AF00;
+        if (m_blinkTime.Ms() > 1000) {
+            m_blinkTime.Reset();
+        }
+
+        char text[10];
+        if (m_mode == SET_SECOND) {
+            sprintf(text, "%02d", m_minute);
+            m_display.DrawText(0, text, m_mode == SET_MINUTE ? color : GRAY);
+
+            sprintf(text, "%02d", m_second);
+            m_display.DrawText(10, text, m_mode == SET_SECOND ? color : GRAY);
+        } else {
+            sprintf(text, "%2d", m_hour);
+            m_display.DrawText(0, text, m_mode == SET_HOUR ? color : GRAY);
+
+            sprintf(text, "%02d", m_minute);
+            m_display.DrawText(10, text, m_mode == SET_MINUTE ? color : GRAY);
+        }
+
+        m_display.DrawChar(8, ':', GRAY);
+
+        m_display.ClearRoundLEDs(DARK_GRAY);
+        m_display.DrawPixel(85 + m_rtc.Get12(m_hour) - 1,
+                            m_mode == SET_HOUR ? color : WHITE);
+        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_minute),
+                            m_mode == SET_MINUTE ? color : WHITE);
+    }
 };
