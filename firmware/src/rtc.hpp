@@ -8,12 +8,12 @@ class Rtc {
     };
 
     Rtc_Pcf8563 m_rtc;
-    bool m_isInitialized{false};
+    inline static bool m_isInitialized{false};
     inline static bool m_receivedInterrupt{false};
     inline static int m_millisAtInterrupt{0};
 
   public:
-    Rtc() { AttachInterrupt(); }
+    Rtc() {}
 
     // Rtc_Pcf8563& Get() { return m_rtc; }
 
@@ -31,6 +31,10 @@ class Rtc {
     }
 
     int Hour() { return m_rtc.getHour(); }
+    int Hour12() {
+        const int hour = m_rtc.getHour();
+        return hour > 12 ? hour - 12 : hour;
+    }
     int Minute() { return m_rtc.getMinute(); }
     int Second() { return m_rtc.getSecond(); }
     int Millis() { return millis() - m_millisAtInterrupt; }
@@ -42,6 +46,7 @@ class Rtc {
             m_rtc.setTimer(1, TMR_1Hz, true);
         } else {
             m_isInitialized = true;
+            AttachInterrupt();
         }
     }
 

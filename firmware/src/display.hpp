@@ -51,7 +51,7 @@ class Display {
         }
     }
 
-    void DrawTextScrolling(String text, int color, int delayMs = 100) {
+    void DrawTextScrolling(String text, int color, int delayMs = 25) {
         const auto length = DrawText(0, text, color);
         for (int i = WIDTH; i > -length; --i) {
             Clear();
