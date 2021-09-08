@@ -13,17 +13,10 @@ class Button {
         RELEASE,
     };
 
-    enum Pins_e {
-        PIN_BTN_UP = 10,
-        PIN_BTN_DOWN = 0,  // has external pull-up resistor
-        PIN_BTN_LEFT = 12,
-        PIN_BTN_RIGHT = 14,
-    };
-
   private:
     inline static std::vector<Button*> m_buttons;
 
-    std::vector<Pins_e> m_pins;  // a Button can have multiple input pins
+    std::vector<int> m_pins;  // a Button can have multiple input pins
     bool m_currentPinState{false};
 
     bool m_enabled{true};
@@ -46,8 +39,8 @@ class Button {
         HandlerFunc_t handlerFunc;
     } config;
 
-    Button(Pins_e pin, int inputType) : Button({pin}, inputType) {}
-    Button(std::initializer_list<Pins_e> pins, int inputType) {
+    Button(int pin, int inputType) : Button({pin}, inputType) {}
+    Button(std::initializer_list<int> pins, int inputType) {
         m_pins = pins;
         for (auto pin : m_pins) {
             pinMode(pin, inputType);

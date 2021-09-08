@@ -1,3 +1,4 @@
 .DS_Store
 /firmware/.pio
 /firmware/.vscode
+/firmware/.gitignore
