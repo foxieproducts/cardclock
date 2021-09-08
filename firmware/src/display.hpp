@@ -103,6 +103,11 @@ class Display {
         m_leds.setPixelColor(num, color);
     }
 
+    void DrawTextCentered(String text, int color) {
+        int pos = 9 - (text.length() * 2);
+        DrawText(pos, text, color);
+    }
+
     int DrawText(int x, String text, int color) {
         text.toUpperCase();
         int textWidth = 0;

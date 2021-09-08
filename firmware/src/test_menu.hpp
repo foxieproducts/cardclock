@@ -20,7 +20,7 @@ class TestMenu : public Menu {
             }
         }
 
-        m_display.DrawText(0, String(brightness) + "%", WHITE);
+        m_display.DrawTextCentered(String(brightness) + "%", WHITE);
     }
 
     virtual void Begin() {}

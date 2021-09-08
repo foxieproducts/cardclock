@@ -53,6 +53,8 @@ class MenuManager {
         m_btnDown.config.canRepeat = true;
         m_btnLeft.config.canRepeat = true;
         m_btnRight.config.canRepeat = true;
+        m_btnLeft.config.repeatRate = 250;
+        m_btnRight.config.repeatRate = 250;
 
         m_btnUp.config.handlerFunc = [&](const Button::Event_e evt) {
             m_menus[m_pos]->Up(evt);
@@ -62,22 +64,20 @@ class MenuManager {
         };
         m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
             const bool handled = m_menus[m_pos]->Left(evt);
-            if (!handled && evt == Button::PRESS) {
+            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
                 if (m_pos-- == 0) {
                     m_pos = m_menus.size() - 1;
                 }
-                // m_display.ScrollHorizontal(Display::WIDTH, 1);
                 m_menus[m_pos]->Begin();
                 m_menus[m_pos]->ShowTitle(PURPLE);
             }
         };
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
             const bool handled = m_menus[m_pos]->Right(evt);
-            if (!handled && evt == Button::PRESS) {
+            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
                 if (++m_pos == (int)m_menus.size()) {
                     m_pos = 0;
                 }
-                // m_display.ScrollHorizontal(Display::WIDTH, -1);
                 m_menus[m_pos]->Begin();
                 m_menus[m_pos]->ShowTitle(BLUE);
             }

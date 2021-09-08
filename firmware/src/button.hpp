@@ -32,7 +32,7 @@ class Button {
         bool canRepeat{false};
 
         // values below are in milliseconds
-        int repeatRate{100};
+        int repeatRate{75};
         int delayBeforeRepeat{400};
         int delayBeforePress{0};  // must be held prior to a PRESS event
         int debounceTime{20};

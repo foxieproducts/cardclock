@@ -95,7 +95,7 @@ class TimeMenu : public Menu {
     }
 
     virtual bool Left(const Button::Event_e evt) {
-        if (evt == Button::PRESS) {
+        if (evt == Button::PRESS || evt == Button::REPEAT) {
             if (m_mode == SET_HOUR) {
                 SetRTCIfTimeChanged();
                 // exit by allowing MenuManager to handle button press
@@ -111,7 +111,7 @@ class TimeMenu : public Menu {
     }
 
     virtual bool Right(const Button::Event_e evt) {
-        if (evt == Button::PRESS) {
+        if (evt == Button::PRESS || evt == Button::REPEAT) {
             if (m_mode == SET_HOUR) {
                 m_mode = SET_MINUTE;
             } else if (m_mode == SET_MINUTE) {
@@ -166,7 +166,7 @@ class TimeMenu : public Menu {
                             m_mode == SET_HOUR ? color : WHITE);
 
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_second),
-                            m_mode == SET_MINUTE ? color : BLUE);
+                            m_mode == SET_SECOND ? color : WHITE);
 
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_minute),
                             m_mode == SET_MINUTE ? color : WHITE);
