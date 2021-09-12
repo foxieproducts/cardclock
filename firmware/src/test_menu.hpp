@@ -1,7 +1,6 @@
 #pragma once
 #include "elapsed_time.hpp"
 #include "menu.hpp"
-#include "rtc.hpp"
 
 class TestMenu : public Menu {
   private:
@@ -12,7 +11,7 @@ class TestMenu : public Menu {
         m_display.Clear(BLACK, true);
         const int brightness = m_display.GetBrightness();
 
-        const int scaled = map(brightness, 0, 100, 0, 12);
+        const int scaled = map(brightness, 0, LightSensor::RANGE, 0, 12);
         m_display.DrawPixel(85 + 11, PURPLE);
         if (scaled > 0) {
             for (int i = 0; i < scaled; ++i) {
@@ -20,7 +19,9 @@ class TestMenu : public Menu {
             }
         }
 
-        m_display.DrawTextCentered(String(brightness) + "%", WHITE);
+        m_display.DrawTextCentered(
+            String(map(brightness, 0, LightSensor::RANGE, 0, 100)) + "%",
+            WHITE);
     }
 
     virtual void Begin() {}
