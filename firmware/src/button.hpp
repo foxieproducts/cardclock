@@ -29,7 +29,7 @@ class Button {
   public:
     using HandlerFunc_t = std::function<void(const Event_e evt)>;
     struct Config {
-        bool canRepeat{false};
+        bool canRepeat{true};
 
         // values below are in milliseconds
         int repeatRate{75};
