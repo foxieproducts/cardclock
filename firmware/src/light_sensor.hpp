@@ -17,9 +17,13 @@ class LightSensor {
     enum {
         ADC_SAMPLES = 4,
         ADC_CLOCK_DIVIDER = 8,
+        MIN_SENSOR_VAL = 10,
+        MAX_SENSOR_VAL = 70,
+        MAX_JITTER = 15,
 
         HISTORY_SIZE = 40,
-        MAX_JITTER = 4,
+
+        RANGE = 100,
     };
 
   private:
@@ -29,6 +33,7 @@ class LightSensor {
 
   public:
     LightSensor() {
+        // populate history with current value
         int32_t average = GetADCAverage();
         for (int i = 0; i < HISTORY_SIZE; ++i) {
             m_history[i] = average;
@@ -65,8 +70,8 @@ class LightSensor {
             average += m_samples[i];
         }
         average /= ADC_SAMPLES;
-        average = map(average, 10, 600, 0, 100);
-        average = constrain(average, 0, 100);
+        average = map(average, MIN_SENSOR_VAL, MAX_SENSOR_VAL, 0, RANGE);
+        average = constrain(average, 0, RANGE);
         return average;
     }
 

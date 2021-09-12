@@ -49,10 +49,6 @@ class MenuManager {
 
   public:
     MenuManager() {
-        m_btnUp.config.canRepeat = true;
-        m_btnDown.config.canRepeat = true;
-        m_btnLeft.config.canRepeat = true;
-        m_btnRight.config.canRepeat = true;
         m_btnLeft.config.repeatRate = 250;
         m_btnRight.config.repeatRate = 250;
 

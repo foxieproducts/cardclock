@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266httpUpdate.h>
+#include <LittleFS.h>
 #include <user_interface.h>
 
 #include "display.hpp"
@@ -13,6 +14,11 @@
 #include "time_menu.hpp"
 
 void setup() {
+    LittleFS.begin();
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+
     Rtc rtc;
     Display disp;
     disp.SetBrightness(5);
@@ -30,10 +36,7 @@ void setup() {
 
         rtc.Update();
         menuMgr.Update();
-
-        disp.SetBrightness(
-            map(disp.GetBrightness(), 0, 100, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
-        disp.Show();
+        disp.Update();
 
         delay(5);
     }

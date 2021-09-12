@@ -37,25 +37,28 @@ class ClockMenu : public Menu {
 
         char text[10];
         sprintf(text, "%2d", m_rtc.Hour12());
-        m_display.DrawText(0, text, Display::ColorWheel(m_colorWheel));
 
-        sprintf(text, "%02d", m_rtc.Minute());
-        m_display.DrawText(10, text, Display::ColorWheel(m_colorWheel));
-
-        if (m_rtc.Second() % 2) {
-            m_display.DrawChar(8, ':', Display::ColorWheel(m_colorWheel));
+        int color = Display::ColorWheel(m_colorWheel);
+        if (m_display.GetBrightness() == 0) {
+            color = Display::ScaleBrightness(Display::ColorWheel(m_colorWheel),
+                                             0.8f);
         }
 
-        m_display.ClearRoundLEDs(DARK_GRAY);
-        m_display.DrawPixel(85 + m_rtc.Hour12() - 1,
-                            Display::ColorWheel(m_colorWheel));
+        m_display.DrawText(0, text, color);
 
-        m_display.DrawPixel(
-            97 + m_display.GetMinuteLED(m_rtc.Second()),
-            Display::ScaleBrightness(Display::ColorWheel(m_colorWheel), 0.5f));
+        sprintf(text, "%02d", m_rtc.Minute());
+        m_display.DrawText(10, text, color);
 
-        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Minute()),
-                            Display::ColorWheel(m_colorWheel));
+        if (m_rtc.Second() % 2) {
+            m_display.DrawChar(8, ':', color);
+        }
+
+        m_display.ClearRoundLEDs(m_display.GetBrightness() ? DARK_GRAY : 0);
+        m_display.DrawPixel(85 + m_rtc.Hour12() - 1, color);
+
+        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Second()), color);
+
+        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Minute()), color);
     }
 
     void DrawAnalog() {}

@@ -29,7 +29,7 @@ enum Display_e {
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
     MIN_BRIGHTNESS = 4,
-    MAX_BRIGHTNESS = 150,
+    MAX_BRIGHTNESS = 50,
 
     LEDS_PIN = 15,
 };
@@ -54,14 +54,19 @@ class Display {
 
     PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
+    int m_currentBrightness{0};
 
   public:
-    Display() {
-        m_leds.begin();
-        m_leds.setBrightness(MIN_BRIGHTNESS);
-    }
+    Display() { m_leds.begin(); }
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
+
+    void Update() {
+        m_currentBrightness = m_lightSensor.Get();
+        SetBrightness(
+            map(m_currentBrightness, 0, 100, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
+        Show();
+    }
 
     void Show() {
         system_soft_wdt_stop();
@@ -220,7 +225,7 @@ class Display {
         return Adafruit_NeoPixel::Color(pos * 3, 255 - pos * 3, 0);
     }
 
-    uint16_t GetBrightness() { return m_lightSensor.Get(); }
+    uint16_t GetBrightness() { return m_currentBrightness; }
     void SetBrightness(const uint8_t brightness) {
         m_leds.setBrightness(brightness);
     }
