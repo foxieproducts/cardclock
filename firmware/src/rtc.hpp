@@ -13,16 +13,18 @@ class Rtc {
     inline static int m_millisAtInterrupt{0};
 
   public:
-    Rtc() {}
+    Rtc() { m_rtc.clearTimer(); }
 
     bool IsInitialized() { return m_isInitialized; }
 
-    void Update(bool force = false) {
+    Rtc_Pcf8563& Get() { return m_rtc; }
+
+    void Update() {
         if (!m_isInitialized) {
             Initialize();
         }
 
-        if (m_receivedInterrupt || force) {
+        if (m_receivedInterrupt) {
             m_rtc.getDateTime();
             m_receivedInterrupt = false;
         }
@@ -48,10 +50,25 @@ class Rtc {
 
   private:
     void Initialize() {
-        if (!m_rtc.timerEnabled()) {
+        // try to set the alarm, when it succeeds, we're booted
+        // and can setup our 1 second timer
+
+        m_rtc.getDateTime();
+        m_rtc.setAlarm(1, 2, 3, 4);
+        m_rtc.enableAlarm();
+        m_rtc.getAlarm();
+        if (m_rtc.getAlarmMinute() == 1 && m_rtc.getAlarmHour() == 2 &&
+            m_rtc.getAlarmDay() == 3 && m_rtc.getAlarmWeekday() == 4) {
+            m_rtc.clearAlarm();
+
+            m_rtc.getDateTime();
+            if (m_rtc.getTimerValue() != 1) {
+                // fresh boot, no time backup, timer was not enabled
+                m_rtc.zeroClock();
+            }
             // interrupt every second
             m_rtc.setTimer(1, TMR_1Hz, true);
-        } else {
+
             m_isInitialized = true;
             AttachInterrupt();
         }
