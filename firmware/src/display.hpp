@@ -159,6 +159,11 @@ class Display {
         }
     }
 
+    void DrawSecondLEDs(const int minute, const int color) {
+        DrawPixel(85 + GetSecondLED(minute), color);
+        DrawPixel(97 + GetMinuteLED(minute), color);
+    }
+
     int GetMinuteLED(const int minute) {
         if (minute > 54)
             return 11;
@@ -183,6 +188,10 @@ class Display {
         if (minute > 4)
             return 1;
         return 0;
+    }
+
+    int GetSecondLED(const int minute) {
+        return minute >= 5 ? GetMinuteLED(minute) - 1 : 11;
     }
 
     int DrawChar(const int x, char character, int color) {

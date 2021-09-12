@@ -16,7 +16,6 @@ class TimeMenu : public Menu {
     int m_hour, m_minute, m_second;
     bool m_timeChanged{false};
     bool m_secondsChanged{false};
-    ElapsedTime m_blinkTime;
 
   public:
     TimeMenu(Display& display, Rtc& rtc) : Menu(display), m_rtc(rtc) {
@@ -139,10 +138,7 @@ class TimeMenu : public Menu {
     void DrawClockDigits() {
         m_display.Clear(BLACK);
 
-        int color = m_blinkTime.Ms() < 500 ? GREEN : 0x00AF00;
-        if (m_blinkTime.Ms() > 1000) {
-            m_blinkTime.Reset();
-        }
+        int color = m_rtc.Millis() < 500 ? GREEN : 0x00AF00;
 
         char text[10];
         if (m_mode == SET_SECOND) {
@@ -162,12 +158,12 @@ class TimeMenu : public Menu {
         m_display.DrawChar(8, ':', GRAY);
 
         m_display.ClearRoundLEDs(DARK_GRAY);
-        m_display.DrawPixel(85 + m_rtc.Get12(m_hour) - 1,
+
+        m_display.DrawSecondLEDs(m_second,
+                                 m_mode == SET_SECOND ? color : WHITE);
+
+        m_display.DrawPixel(85 + m_rtc.Conv24to12(m_hour) - 1,
                             m_mode == SET_HOUR ? color : WHITE);
-
-        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_second),
-                            m_mode == SET_SECOND ? color : WHITE);
-
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_minute),
                             m_mode == SET_MINUTE ? color : WHITE);
     }

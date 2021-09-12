@@ -39,9 +39,9 @@ class ClockMenu : public Menu {
         sprintf(text, "%2d", m_rtc.Hour12());
 
         int color = Display::ColorWheel(m_colorWheel);
+        int halfColor = Display::ScaleBrightness(color, 0.5f);
         if (m_display.GetBrightness() == 0) {
-            color = Display::ScaleBrightness(Display::ColorWheel(m_colorWheel),
-                                             0.8f);
+            color = Display::ScaleBrightness(color, 0.8f);
         }
 
         m_display.DrawText(0, text, color);
@@ -54,10 +54,10 @@ class ClockMenu : public Menu {
         }
 
         m_display.ClearRoundLEDs(m_display.GetBrightness() ? DARK_GRAY : 0);
+
+        m_display.DrawSecondLEDs(m_rtc.Second(), halfColor);
+
         m_display.DrawPixel(85 + m_rtc.Hour12() - 1, color);
-
-        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Second()), color);
-
         m_display.DrawPixel(97 + m_display.GetMinuteLED(m_rtc.Minute()), color);
     }
 
