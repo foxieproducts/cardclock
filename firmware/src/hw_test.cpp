@@ -16,10 +16,10 @@
 void ShowTestStatus();
 void DownloadFirmware();
 
-Button g_btnUp(Button::PIN_BTN_UP, INPUT_PULLUP);
-Button g_btnDown(Button::PIN_BTN_DOWN, INPUT);
-Button g_btnLeft(Button::PIN_BTN_LEFT, INPUT_PULLUP);
-Button g_btnRight(Button::PIN_BTN_RIGHT, INPUT_PULLUP);
+Button g_btnUp(PIN_BTN_UP, INPUT_PULLUP);
+Button g_btnDown(PIN_BTN_DOWN, INPUT);
+Button g_btnLeft(PIN_BTN_LEFT, INPUT_PULLUP);
+Button g_btnRight(PIN_BTN_RIGHT, INPUT_PULLUP);
 
 Display g_display;
 Rtc g_rtc;
@@ -36,7 +36,7 @@ struct TestResults {
 
 void setup() {
     // hold RIGHT button on boot to erase WiFi settings
-    if (digitalRead(Button::PIN_BTN_RIGHT) == LOW) {
+    if (digitalRead(PIN_BTN_RIGHT) == LOW) {
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWrite(LED_BUILTIN, LOW);
         ESP.eraseConfig();
@@ -116,8 +116,7 @@ void ShowTestStatus() {
     g_display.DrawPixel(17 * 2 + 15, g_results.right ? GREEN : WHITE);
     g_display.DrawPixel(17 * 2 + 14, g_results.rtc ? GREEN : WHITE);
 
-    g_display.SetBrightness(g_display.GetBrightness());
-    g_display.Show();
+    g_display.Update();
 }
 
 void FWUpdateComplete() {
