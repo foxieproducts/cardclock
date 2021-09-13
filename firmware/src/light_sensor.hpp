@@ -17,7 +17,7 @@ class LightSensor {
     enum {
         ADC_SAMPLES = 4,
         ADC_CLOCK_DIVIDER = 8,
-        MIN_SENSOR_VAL = 10,
+        MIN_SENSOR_VAL = 15,
         MAX_SENSOR_VAL = 70,
         MAX_JITTER = 15,
 
@@ -34,19 +34,17 @@ class LightSensor {
   public:
     LightSensor() {
         // populate history with current value
-        int32_t average = GetADCAverage();
         for (int i = 0; i < HISTORY_SIZE; ++i) {
-            m_history[i] = average;
+            m_history[i] = GetCurrentADCValue();
         }
     }
 
     uint16_t Get() {
-        int32_t average = GetADCAverage();
+        int32_t average = GetCurrentADCValue();
 
-        // average a bit more
+        // average more, maybe not a great solution, not amazing at math
         if ((uint16_t)average > m_history[m_pos] + MAX_JITTER ||
-            (uint16_t)average < m_history[m_pos] - MAX_JITTER || average == 0 ||
-            average == 100) {
+            (uint16_t)average < m_history[m_pos] - MAX_JITTER || average == 0) {
             m_history[m_pos] = average;
         }
         if (m_pos++ == HISTORY_SIZE) {
@@ -63,7 +61,8 @@ class LightSensor {
     }
 
   private:
-    uint16_t GetADCAverage() {
+    // get a smoothed, bounded value from the sensor
+    uint16_t GetCurrentADCValue() {
         ReadADC();
         int32_t average = 0;
         for (int i = 0; i < ADC_SAMPLES; i++) {
@@ -75,6 +74,7 @@ class LightSensor {
         return average;
     }
 
+    // immediately read ADC samples into all ADC_SAMPLES slots
     void ReadADC() {
         system_soft_wdt_stop();
         ets_intr_lock();
