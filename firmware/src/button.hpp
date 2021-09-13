@@ -5,6 +5,13 @@
 
 #include "elapsed_time.hpp"
 
+enum Pins_e {
+    PIN_BTN_UP = 10,
+    PIN_BTN_DOWN = 0,  // has external pull-up resistor
+    PIN_BTN_LEFT = 12,
+    PIN_BTN_RIGHT = 14,
+};
+
 class Button {
   public:
     enum Event_e {
