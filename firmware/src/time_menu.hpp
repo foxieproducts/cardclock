@@ -19,9 +19,7 @@ class TimeMenu : public Menu {
 
   public:
     TimeMenu(Display& display, Rtc& rtc, Settings& settings)
-        : Menu(display, settings), m_rtc(rtc) {
-        m_title = "SET TIME";
-    }
+        : Menu(display, settings), m_rtc(rtc) {}
 
     virtual void Update() {
         m_display.Clear();

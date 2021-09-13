@@ -1,7 +1,7 @@
 #pragma once
-#include <Adafruit_NeoPixel.h>
-#include <map>     // for std::map
-#include <vector>  // for std::vector
+#include <Adafruit_NeoPixel.h>  // for communication with WS2812B LEDs
+#include <map>                  // for std::map
+#include <vector>               // for std::vector
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"
 #include "settings.hpp"
@@ -53,12 +53,14 @@ class Display {
         uint32_t getPixelColor(uint16_t n) { return m_pixels[n]; }
     };
 
+    Settings& m_settings;
+
     PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
     int m_currentBrightness{0};
 
   public:
-    Display(Settings& settings) {
+    Display(Settings& settings) : m_settings(settings) {
         m_leds.begin();
         // make sure the blue LED on the ESP-12F is off
         pinMode(LED_BUILTIN, OUTPUT);
@@ -69,22 +71,13 @@ class Display {
 
     void Update() {
         m_currentBrightness = m_lightSensor.Get();
-        SetBrightness(
-            map(m_currentBrightness, 0, 100, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
+        SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
+                          m_settings["min_brightness"] | MIN_BRIGHTNESS,
+                          m_settings["max_brightness"] | MAX_BRIGHTNESS));
         Show();
     }
 
-    void Show() {
-        system_soft_wdt_stop();
-        ets_intr_lock();
-        noInterrupts();
-
-        m_leds.show();
-
-        interrupts();
-        ets_intr_unlock();
-        system_soft_wdt_restart();
-    }
+    void Show() { m_leds.show(); }
 
     void Clear(int color = BLACK, const bool includeRoundLEDs = false) {
         int num = WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
@@ -99,26 +92,8 @@ class Display {
         }
     }
 
-    void DrawTextScrolling(String text, int color, int delayMs = 75) {
-        const auto length = DrawText(0, text, color);
-
-        for (int i = WIDTH; i > WIDTH - length; --i) {
-            Clear();
-            DrawText(i, text, color);
-            Show();
-            ElapsedTime::Delay(delayMs);
-        }
-
-        ElapsedTime::Delay(delayMs);
-    }
-
     void DrawPixel(const int num, const int color) {
         m_leds.setPixelColor(num, color);
-    }
-
-    void DrawTextCentered(String text, int color) {
-        int pos = 9 - (text.length() * 2);
-        DrawText(pos, text, color);
     }
 
     int DrawText(int x, String text, int color) {
@@ -131,6 +106,24 @@ class Display {
             x += charWidth;
         }
         return textWidth;
+    }
+
+    void DrawTextScrolling(String text, int color, int delayMs = 75) {
+        const auto length = DrawText(0, text, color);
+
+        for (int i = WIDTH; i > WIDTH - length; --i) {
+            Clear();
+            DrawText(i, text, color);
+            Show();
+            ElapsedTime::Delay(delayMs);
+        }
+
+        ElapsedTime::Delay(delayMs * 4);
+    }
+
+    void DrawTextCentered(String text, int color) {
+        int pos = 9 - (text.length() * 2);
+        DrawText(pos, text, color);
     }
 
     void ScrollHorizontal(const int num,

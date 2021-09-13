@@ -18,8 +18,6 @@ class Rtc {
 
     bool IsInitialized() { return m_isInitialized; }
 
-    Rtc_Pcf8563& Get() { return m_rtc; }
-
     void Update() {
         if (!m_isInitialized) {
             Initialize();
@@ -48,6 +46,8 @@ class Rtc {
         }
         return hour;
     }
+
+    void SetClockToZero() { m_rtc.zeroClock(); }
 
   private:
     void Initialize() {

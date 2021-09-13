@@ -11,26 +11,23 @@
 #include "settings.hpp"
 
 #include "clock_menu.hpp"
-#include "test_menu.hpp"
+#include "settings_menu.hpp"
 #include "time_menu.hpp"
 
 void setup() {
     Settings settings;
     Rtc rtc;
     Display disp(settings);
-    disp.SetBrightness(5);
 
     MenuManager menuMgr;
-
-    menuMgr.Add(std::make_shared<TestMenu>(disp, settings));
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));
     menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc, settings));
+    menuMgr.Add(std::make_shared<SettingsMenu>(disp, settings));
+
+    disp.Update();
+    menuMgr.ActivateMenu(1);
 
     // setupWiFi("FoxieClock");
-    disp.Update();
-    disp.DrawTextScrolling(settings["test"], PURPLE);
-
-    // settings.Save();
 
     while (true) {
         // handleWiFi();

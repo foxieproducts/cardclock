@@ -119,20 +119,21 @@ void ShowTestStatus() {
     g_display.Update();
 }
 
-void FWUpdateComplete() {
+void FWInstallComplete() {
     g_display.Clear();
     g_display.DrawText(1, "FLSH", ORANGE);
     g_display.Show();
+    g_rtc.SetClockToZero();
 }
 
-void FWUpdateProgress(int cur, int total) {
+void FWInstallProgress(int cur, int total) {
     g_display.DrawPixel(85 + map(cur, 0, total, 0, 23), BLUE);
     g_display.Clear();
     g_display.DrawText(3, String(map(cur, 0, total, 0, 100)) + "%", PURPLE);
     g_display.Show();
 }
 
-void FWUpdateError(int err) {
+void FWInstallError(int err) {
     g_display.DrawTextScrolling(ESPhttpUpdate.getLastErrorString(), RED, 25);
 }
 
@@ -141,9 +142,9 @@ void DownloadFirmware() {
         WiFiClientSecure client;
         client.setInsecure();
 
-        ESPhttpUpdate.onEnd(FWUpdateComplete);
-        ESPhttpUpdate.onProgress(FWUpdateProgress);
-        ESPhttpUpdate.onError(FWUpdateError);
+        ESPhttpUpdate.onEnd(FWInstallComplete);
+        ESPhttpUpdate.onProgress(FWInstallProgress);
+        ESPhttpUpdate.onError(FWInstallError);
         ESPhttpUpdate.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
         ESPhttpUpdate.rebootOnUpdate(true);
 

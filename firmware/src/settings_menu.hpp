@@ -2,28 +2,20 @@
 #include "elapsed_time.hpp"
 #include "menu.hpp"
 
-class TestMenu : public Menu {
+class SettingsMenu : public Menu {
   private:
+    int m_settingNum{0};
+
   public:
-    TestMenu(Display& display, Settings& settings) : Menu(display, settings) {
-        m_title = "TEST";
+    SettingsMenu(Display& display, Settings& settings)
+        : Menu(display, settings) {
+        m_title = "SETTINGS";
     }
 
     virtual void Update() {
         m_display.Clear(BLACK, true);
-        const int brightness = m_display.GetBrightness();
 
-        const int scaled = map(brightness, 0, LightSensor::RANGE, 0, 12);
-        m_display.DrawPixel(85 + 11, PURPLE);
-        if (scaled > 0) {
-            for (int i = 0; i < scaled; ++i) {
-                m_display.DrawPixel(85 + i, PURPLE);
-            }
-        }
-
-        m_display.DrawTextCentered(
-            String(map(brightness, 0, LightSensor::RANGE, 0, 100)) + "%",
-            WHITE);
+        m_display.DrawText(0, "hi", PURPLE);
     }
 
     virtual void Begin() {}

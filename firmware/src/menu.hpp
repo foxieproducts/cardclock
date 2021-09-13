@@ -17,20 +17,12 @@ class Menu {
     Menu(Display& display, Settings& settings)
         : m_display(display), m_settings(settings) {}
 
-    virtual void ShowTitle(const int color) {
-        if (!m_title.isEmpty()) {
-            //    m_display.DrawTextScrolling(m_title, color);
-        }
-    }
-
     virtual void Update() = 0;
     virtual void Begin() {}
     virtual bool Up(const Button::Event_e evt) { return false; }
     virtual bool Down(const Button::Event_e evt) { return false; }
     virtual bool Left(const Button::Event_e evt) { return false; }
     virtual bool Right(const Button::Event_e evt) { return false; }
-
-    virtual bool HasSubmenu() { return false; }
 };
 
 class MenuManager {
@@ -57,21 +49,21 @@ class MenuManager {
         m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
             const bool handled = m_menus[m_pos]->Left(evt);
             if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (m_pos-- == 0) {
-                    m_pos = m_menus.size() - 1;
+                if (m_pos == 0) {
+                    return;
                 }
+                --m_pos;
                 m_menus[m_pos]->Begin();
-                m_menus[m_pos]->ShowTitle(PURPLE);
             }
         };
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
             const bool handled = m_menus[m_pos]->Right(evt);
             if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (++m_pos == (int)m_menus.size()) {
-                    m_pos = 0;
+                if (m_pos == (int)m_menus.size() - 1) {
+                    return;
                 }
+                m_pos++;
                 m_menus[m_pos]->Begin();
-                m_menus[m_pos]->ShowTitle(BLUE);
             }
         };
     }
@@ -84,5 +76,12 @@ class MenuManager {
     void Update() {
         Button::Update();
         m_menus[m_pos]->Update();
+    }
+
+    void ActivateMenu(const unsigned int menuNum) {
+        if (menuNum < m_menus.size()) {
+            m_pos = menuNum;
+            m_menus[m_pos]->Begin();
+        }
     }
 };
