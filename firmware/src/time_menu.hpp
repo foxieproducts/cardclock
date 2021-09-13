@@ -18,8 +18,9 @@ class TimeMenu : public Menu {
     bool m_secondsChanged{false};
 
   public:
-    TimeMenu(Display& display, Rtc& rtc) : Menu(display), m_rtc(rtc) {
-        // m_title = "SET TIME";
+    TimeMenu(Display& display, Rtc& rtc, Settings& settings)
+        : Menu(display, settings), m_rtc(rtc) {
+        m_title = "SET TIME";
     }
 
     virtual void Update() {

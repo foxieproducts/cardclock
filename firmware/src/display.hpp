@@ -1,9 +1,10 @@
 #pragma once
 #include <Adafruit_NeoPixel.h>
-#include <Arduino.h>  // for delay()
-#include <map>        // for std::map
-#include <vector>     // for std::vector
+#include <map>     // for std::map
+#include <vector>  // for std::vector
+#include "elapsed_time.hpp"
 #include "light_sensor.hpp"
+#include "settings.hpp"
 
 enum Colors {
     BLACK = 0x000000,
@@ -29,7 +30,7 @@ enum Display_e {
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
     MIN_BRIGHTNESS = 4,
-    MAX_BRIGHTNESS = 50,
+    MAX_BRIGHTNESS = 70,
 
     LEDS_PIN = 15,
 };
@@ -57,7 +58,12 @@ class Display {
     int m_currentBrightness{0};
 
   public:
-    Display() { m_leds.begin(); }
+    Display(Settings& settings) {
+        m_leds.begin();
+        // make sure the blue LED on the ESP-12F is off
+        pinMode(LED_BUILTIN, OUTPUT);
+        digitalWrite(LED_BUILTIN, HIGH);
+    }
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
 
@@ -93,15 +99,17 @@ class Display {
         }
     }
 
-    void DrawTextScrolling(String text, int color, int delayMs = 25) {
+    void DrawTextScrolling(String text, int color, int delayMs = 75) {
         const auto length = DrawText(0, text, color);
+
         for (int i = WIDTH; i > WIDTH - length; --i) {
             Clear();
             DrawText(i, text, color);
             Show();
-            delay(delayMs);
+            ElapsedTime::Delay(delayMs);
         }
-        delay(250);
+
+        ElapsedTime::Delay(delayMs);
     }
 
     void DrawPixel(const int num, const int color) {
@@ -131,7 +139,7 @@ class Display {
         for (int i = 0; i < num; ++i) {
             MoveHorizontal(direction);
             Show();
-            delay(delayMs);
+            ElapsedTime::Delay(delayMs);
         }
     }
 

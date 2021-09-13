@@ -5,18 +5,21 @@
 
 #include "button.hpp"
 #include "display.hpp"
+#include "settings.hpp"
 
 class Menu {
   protected:
     Display& m_display;
+    Settings& m_settings;
     String m_title;
 
   public:
-    Menu(Display& display) : m_display(display) {}
+    Menu(Display& display, Settings& settings)
+        : m_display(display), m_settings(settings) {}
 
     virtual void ShowTitle(const int color) {
         if (!m_title.isEmpty()) {
-            m_display.DrawTextScrolling(m_title, color);
+            //    m_display.DrawTextScrolling(m_title, color);
         }
     }
 
@@ -34,13 +37,6 @@ class MenuManager {
   private:
     std::vector<std::shared_ptr<Menu>> m_menus;
     int m_pos{0};
-
-    enum Pins_e {
-        PIN_BTN_UP = 10,
-        PIN_BTN_DOWN = 0,  // has external pull-up resistor
-        PIN_BTN_LEFT = 12,
-        PIN_BTN_RIGHT = 14,
-    };
 
     Button m_btnUp{PIN_BTN_UP, INPUT_PULLUP};
     Button m_btnDown{PIN_BTN_DOWN, INPUT};

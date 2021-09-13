@@ -8,31 +8,32 @@
 
 #include "display.hpp"
 #include "foxie_esp12.hpp"
+#include "settings.hpp"
 
 #include "clock_menu.hpp"
 #include "test_menu.hpp"
 #include "time_menu.hpp"
 
 void setup() {
-    LittleFS.begin();
-
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-
+    Settings settings;
     Rtc rtc;
-    Display disp;
+    Display disp(settings);
     disp.SetBrightness(5);
 
     MenuManager menuMgr;
 
-    menuMgr.Add(std::make_shared<TestMenu>(disp));
-    menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc));
-    menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc));
+    menuMgr.Add(std::make_shared<TestMenu>(disp, settings));
+    menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));
+    menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc, settings));
 
-    setupWiFi("FoxieClock");
+    // setupWiFi("FoxieClock");
+    disp.Update();
+    disp.DrawTextScrolling(settings["test"], PURPLE);
+
+    // settings.Save();
 
     while (true) {
-        handleWiFi();
+        // handleWiFi();
 
         rtc.Update();
         menuMgr.Update();

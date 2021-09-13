@@ -5,7 +5,9 @@
 class TestMenu : public Menu {
   private:
   public:
-    TestMenu(Display& display) : Menu(display) {}
+    TestMenu(Display& display, Settings& settings) : Menu(display, settings) {
+        m_title = "TEST";
+    }
 
     virtual void Update() {
         m_display.Clear(BLACK, true);
