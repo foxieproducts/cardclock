@@ -9,4 +9,11 @@ class ElapsedTime {
     ElapsedTime() { Reset(); }
     void Reset() { m_millis = millis(); }
     int Ms() { return millis() - m_millis; }
+
+    static void Delay(const int ms) {
+        ElapsedTime delayTime;
+        while (delayTime.Ms() < ms) {
+            delay(ms);
+        }
+    }
 };
