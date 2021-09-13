@@ -14,7 +14,7 @@ class Rtc {
     inline static int m_millisAtInterrupt{0};
 
   public:
-    Rtc() { m_rtc.clearTimer(); }
+    Rtc() { m_rtc.getDateTime(); }
 
     bool IsInitialized() { return m_isInitialized; }
 
@@ -63,7 +63,7 @@ class Rtc {
 
             m_rtc.getDateTime();
             if (m_rtc.getTimerValue() != TIMER_NUM_SECONDS) {
-                // fresh boot, no time backup, timer was not enabled
+                // fresh boot -- no time backup, timer was not enabled
                 m_rtc.zeroClock();
             }
 
