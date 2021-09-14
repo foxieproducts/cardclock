@@ -11,7 +11,6 @@ class Menu {
   protected:
     Display& m_display;
     Settings& m_settings;
-    String m_title;
 
   public:
     Menu(Display& display, Settings& settings)
@@ -27,6 +26,9 @@ class Menu {
 
 class MenuManager {
   private:
+    Display& m_display;
+    Settings& m_settings;
+
     std::vector<std::shared_ptr<Menu>> m_menus;
     int m_pos{0};
 
@@ -36,9 +38,12 @@ class MenuManager {
     Button m_btnRight{PIN_BTN_RIGHT, INPUT_PULLUP};
 
   public:
-    MenuManager() {
+    MenuManager(Display& display, Settings& settings)
+        : m_display(display), m_settings(settings) {
         m_btnLeft.config.repeatRate = 250;
         m_btnRight.config.repeatRate = 250;
+        m_btnLeft.config.canRepeat = false;
+        m_btnRight.config.canRepeat = false;
 
         m_btnUp.config.handlerFunc = [&](const Button::Event_e evt) {
             m_menus[m_pos]->Up(evt);

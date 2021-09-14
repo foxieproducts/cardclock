@@ -11,7 +11,7 @@
 #include "settings.hpp"
 
 #include "clock_menu.hpp"
-#include "settings_menu.hpp"
+#include "config_menu.hpp"
 #include "time_menu.hpp"
 
 void setup() {
@@ -19,10 +19,14 @@ void setup() {
     Rtc rtc;
     Display disp(settings);
 
-    MenuManager menuMgr;
+    MenuManager menuMgr(disp, settings);
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));
     menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc, settings));
-    menuMgr.Add(std::make_shared<SettingsMenu>(disp, settings));
+
+    auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
+    menuMgr.Add(configMenu);
+    configMenu->Add({disp, settings, "24HR", {"12", "24"}});
+    configMenu->Add({disp, settings, "WIFI", {"OFF", "ON"}});
 
     disp.Update();
     menuMgr.ActivateMenu(1);

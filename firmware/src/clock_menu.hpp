@@ -42,7 +42,7 @@ class ClockMenu : public Menu {
         m_display.Clear();
 
         char text[10];
-        sprintf(text, "%2d", m_rtc.Hour12());
+        sprintf(text, "%2d", m_settings["24HR"] == "12" ? m_rtc.Hour12() : m_rtc.Hour());
         m_display.DrawText(0, text, color);
         sprintf(text, "%02d", m_rtc.Minute());
         m_display.DrawText(10, text, color);
