@@ -2,6 +2,7 @@
 #include <Adafruit_NeoPixel.h>  // for communication with WS2812B LEDs
 #include <map>                  // for std::map
 #include <vector>               // for std::vector
+#include "characters.hpp"
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"
 #include "settings.hpp"
@@ -31,6 +32,8 @@ enum Display_e {
 
     MIN_BRIGHTNESS = 4,
     MAX_BRIGHTNESS = 70,
+    SCROLL_DELAY_HORIZONTAL_MS = 10,
+    SCROLL_DELAY_VERTICAL_MS = 35,
 
     LEDS_PIN = 15,
 };
@@ -128,36 +131,24 @@ class Display {
 
     void ScrollHorizontal(const int num,
                           const int direction,
-                          const int delayMs = 15) {
+                          const int delayMs = SCROLL_DELAY_HORIZONTAL_MS) {
         for (int i = 0; i < num; ++i) {
             MoveHorizontal(direction);
-            Show();
+            Update();
             ElapsedTime::Delay(delayMs);
         }
+        ElapsedTime::Delay(delayMs);
     }
 
-    void MoveHorizontal(int num) {
-        auto movePixel = [&](int row, int col) {
-            int color = m_leds.getPixelColor(row * WIDTH + col);
-
-            const int x = col + num;
-            if (x > 0 && x < WIDTH) {
-                DrawPixel(row * WIDTH + x, color);
-                DrawPixel(row * WIDTH + col, BLACK);
-            }
-        };
-
-        for (int row = 0; row < HEIGHT; ++row) {
-            if (num < 0) {
-                for (int col = 0; col < WIDTH; ++col) {
-                    movePixel(row, col);
-                }
-            } else {
-                for (int col = WIDTH - 1; col >= 0; --col) {
-                    movePixel(row, col);
-                }
-            }
+    void ScrollVertical(const int num,
+                        const int direction,
+                        const int delayMs = SCROLL_DELAY_VERTICAL_MS) {
+        for (int i = 0; i < num; ++i) {
+            MoveVertical(direction);
+            Update();
+            ElapsedTime::Delay(delayMs);
         }
+        ElapsedTime::Delay(delayMs);
     }
 
     void DrawSecondLEDs(const int minute, const int color) {
@@ -166,29 +157,7 @@ class Display {
     }
 
     int GetMinuteLED(const int minute) {
-        if (minute > 54)
-            return 11;
-        if (minute > 49)
-            return 10;
-        if (minute > 44)
-            return 9;
-        if (minute > 39)
-            return 8;
-        if (minute > 34)
-            return 7;
-        if (minute > 29)
-            return 6;
-        if (minute > 24)
-            return 5;
-        if (minute > 19)
-            return 4;
-        if (minute > 14)
-            return 3;
-        if (minute > 9)
-            return 2;
-        if (minute > 4)
-            return 1;
-        return 0;
+        return minute / 5;  // represent 60 seconds with 12 LEDs, 60 / 12 = 5
     }
 
     int GetSecondLED(const int minute) {
@@ -248,505 +217,42 @@ class Display {
     }
 
   private:
-    const std::map<uint8_t, std::vector<uint8_t>> CHARS = {
-        // clang-format off
+    void MovePixel(int fromCol, int fromRow, int toCol, int toRow) {
+        int color = m_leds.getPixelColor(fromRow * WIDTH + fromCol);
 
-        { 'A', { 
-           0, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-           1, 1, 1,
-           1, 0, 1,
-        } },
+        if (toCol >= 0 && toCol < WIDTH && toRow >= 0 && toRow < HEIGHT) {
+            DrawPixel(toRow * WIDTH + toCol, color);
+            DrawPixel(fromRow * WIDTH + fromCol, BLACK);
+        }
+    }
 
-        { 'B', { 
-           1, 1, 0,
-           1, 0, 1,
-           1, 1, 0,
-           1, 0, 1,
-           1, 1, 0,
-        } },
+    void MoveHorizontal(int num) {
+        for (int row = 0; row < HEIGHT; ++row) {
+            if (num < 0) {
+                for (int col = 1; col < WIDTH; ++col) {
+                    MovePixel(col, row, col + num, row);
+                }
+            } else {
+                for (int col = WIDTH - 2; col >= 0; --col) {
+                    MovePixel(col, row, col + num, row);
+                }
+            }
+        }
+    }
 
-        { 'C', { 
-           0, 1, 1,
-           1, 0, 0,
-           1, 0, 0,
-           1, 0, 0,
-           0, 1, 1,
-        } },
-
-        { 'D', { 
-           1, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           1, 1, 0,
-        } },
-
-        { 'E', { 
-           1, 1, 1,
-           1, 0, 0,
-           1, 1, 1,
-           1, 0, 0,
-           1, 1, 1,
-        } },
-
-        { 'F', { 
-           1, 1, 1,
-           1, 0, 0,
-           1, 1, 1,
-           1, 0, 0,
-           1, 0, 0,
-        } },
-
-        { 'G', { 
-           0, 1, 1,
-           1, 0, 0,
-           1, 1, 1,
-           1, 0, 1,
-           0, 1, 1,
-        } },
-
-        { 'H', { 
-           1, 0, 1,
-           1, 0, 1,
-           1, 1, 1,
-           1, 0, 1,
-           1, 0, 1,
-        } },
-
-        { 'I', { 
-           1, 1, 1,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-           1, 1, 1,
-        } },
-
-        { 'J', { 
-           0, 0, 1,
-           0, 0, 1,
-           0, 0, 1,
-           0, 0, 1,
-           1, 1, 0,
-        } },
-
-        { 'K', { 
-           1, 0, 1,
-           1, 0, 1,
-           1, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-        } },
-
-        { 'L', { 
-           1, 0, 0,
-           1, 0, 0,
-           1, 0, 0,
-           1, 0, 0,
-           1, 1, 1,
-        } },
-
-        { 'M', { 
-           1, 0, 0, 0, 1,
-           1, 1, 0, 1, 1,
-           1, 0, 1, 0, 1,
-           1, 0, 0, 0, 1,
-           1, 0, 0, 0, 1,
-        } },
-
-        { 'N', { 
-           1, 0, 0, 1,
-           1, 1, 0, 1,
-           1, 0, 1, 1,
-           1, 0, 0, 1,
-           1, 0, 0, 1,
-        } },
-
-        { 'O', { 
-           0, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 0,
-        } },
-
-        { 'P', { 
-           1, 1, 0,
-           1, 0, 1,
-           1, 1, 0,
-           1, 0, 0,
-           1, 0, 0,
-        } },
-
-        { 'Q', { 
-           0, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 1,
-        } },
-
-        { 'R', { 
-           1, 1, 0,
-           1, 0, 1,
-           1, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-        } },
-
-        { 'S', { 
-           0, 1, 1,
-           1, 0, 0,
-           0, 1, 0,
-           0, 0, 1,
-           1, 1, 0,
-        } },
-
-        { 'T', { 
-           1, 1, 1,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-        } },
-
-        { 'U', { 
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 1,
-        } },
-
-        { 'V', { 
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 0,
-        } },
-
-        { 'W', { 
-           1, 0, 0, 0, 1,
-           1, 0, 0, 0, 1,
-           1, 0, 1, 0, 1,
-           1, 0, 1, 0, 1,
-           0, 1, 0, 1, 0,
-        } },
-
-        { 'X', { 
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-        } },
-
-        { 'Y', { 
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-        } },
-
-        { 'Z', { 
-           1, 1, 1,
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-           1, 1, 1,
-        } },
-
-        { '/', { 
-           0, 0, 1,
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-           1, 0, 0,
-        } },
-
-        { '\\', { 
-           1, 0, 0,
-           1, 0, 0,
-           0, 1, 0,
-           0, 0, 1,
-           0, 0, 1,
-        } },
-
-        { '!', { 
-           1,
-           1,
-           1,
-           0,
-           1,
-        } },
-
-        { '@', { 
-           0, 1, 0,
-           1, 1, 1,
-           1, 1, 1,
-           1, 0, 0,
-           0, 1, 1,
-        } },
-
-        { '#', { 
-           0, 1, 0, 1, 0,
-           1, 1, 1, 1, 1,
-           0, 1, 0, 1, 0,
-           1, 1, 1, 1, 1,
-           0, 1, 0, 1, 0,
-        } },
-
-        { '$', { 
-           0, 1, 1,
-           1, 1, 0,
-           0, 1, 0,
-           0, 1, 1,
-           1, 1, 0,
-        } },
-
-        { '%', { 
-           1, 0, 0,
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-           0, 0, 1,
-        } },
-
-        { '^', { 
-           0, 1, 0,
-           1, 0, 1,
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-        } },
-
-        { '&', { 
-           0, 1, 0,
-           1, 0, 0,
-           0, 1, 0,
-           1, 0, 1,
-           1, 1, 1,
-        } },
-
-        { '*', { 
-           1, 0, 1,
-           0, 1, 0,
-           1, 1, 1,
-           0, 1, 0,
-           1, 0, 1,
-        } },
-
-        { '(', { 
-           0, 1,
-           1, 0,
-           1, 0,
-           1, 0,
-           0, 1,
-        } },
-
-        { ')', { 
-           1, 0,
-           0, 1,
-           0, 1,
-           0, 1,
-           1, 0,
-        } },
-
-        { '-', { 
-           0, 0, 0,
-           0, 0, 0,
-           1, 1, 1,
-           0, 0, 0,
-           0, 0, 0,
-        } },
-
-        { '_', { 
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-           1, 1, 1,
-        } },
-
-        { '+', { 
-           0, 0, 0,
-           0, 1, 0,
-           1, 1, 1,
-           0, 1, 0,
-           0, 0, 0,
-        } },
-
-        { '=', { 
-           0, 0, 0,
-           1, 1, 1,
-           0, 0, 0,
-           1, 1, 1,
-           0, 0, 0,
-        } },
-
-        { ',', { 
-           0, 0,
-           0, 0,
-           0, 0,
-           0, 1,
-           1, 0,
-        } },
-
-        { '.', { 
-           0,
-           0,
-           0,
-           0,
-           1,
-        } },
-
-        { '<', { 
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-           0, 1, 0,
-           0, 0, 1,
-        } },
-
-        { '>', { 
-           1, 0, 0,
-           0, 1, 0,
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-        } },
-
-        { ';', { 
-           0, 0,
-           0, 1,
-           0, 0,
-           0, 1,
-           1, 0,
-        } },
-
-        { ':', { 
-           0,
-           1,
-           0,
-           1,
-           0,
-        } },
-
-        { '\'', { 
-           1,
-           1,
-           0,
-           0,
-           0,
-        } },
-
-        { '"', { 
-           1, 0, 1,
-           1, 0, 1,
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-        } },
-
-        { '?', { 
-           1, 1, 0,
-           0, 0, 1,
-           0, 1, 0,
-           0, 0, 0,
-           0, 1, 0,
-        } },
-
-        { ' ', { 
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-           0, 0, 0,
-        } },
-
-        { '0', { 
-           0, 1, 0,
-           1, 0, 1,
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 0,
-        } },
-
-        { '1', { 
-           0, 1, 0,
-           1, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-        } },
-
-        { '2', { 
-           1, 1, 0,
-           0, 0, 1,
-           0, 1, 0,
-           1, 0, 0,
-           1, 1, 1,
-        } },
-   
-        { '3', { 
-           1, 1, 0,
-           0, 0, 1,
-           0, 1, 0,
-           0, 0, 1,
-           1, 1, 0,
-        } },
-     
-        { '4', { 
-           1, 0, 1,
-           1, 0, 1,
-           0, 1, 1,
-           0, 0, 1,
-           0, 0, 1,
-        } },
-     
-        { '5', { 
-           1, 1, 1,
-           1, 0, 0,
-           1, 1, 1,
-           0, 0, 1,
-           1, 1, 0,
-        } },
-     
-        { '6', { 
-           0, 1, 1,
-           1, 0, 0,
-           1, 1, 0,
-           1, 0, 1,
-           0, 1, 0,
-        } },
-     
-        { '7', { 
-           1, 1, 1,
-           0, 0, 1,
-           0, 1, 0,
-           0, 1, 0,
-           0, 1, 0,
-        } },
-     
-        { '8', { 
-           0, 1, 0,
-           1, 0, 1,
-           0, 1, 0,
-           1, 0, 1,
-           0, 1, 0,
-        } },
-     
-        { '9', { 
-           0, 1, 0,
-           1, 0, 1,
-           0, 1, 1,
-           0, 0, 1,
-           1, 1, 0,
-        } },
-
-        // clang-format on
-    };
+    void MoveVertical(int num) {
+        if (num < 0) {
+            for (int row = 1; row < HEIGHT; ++row) {
+                for (int col = 0; col < WIDTH; ++col) {
+                    MovePixel(col, row, col, row + num);
+                }
+            }
+        } else {
+            for (int row = HEIGHT - 2; row >= 0; --row) {
+                for (int col = 0; col < WIDTH; ++col) {
+                    MovePixel(col, row, col, row + num);
+                }
+            }
+        }
+    }
 };
