@@ -42,19 +42,22 @@ void setup() {
         {disp, settings, "VER", [&]() {
              String ip = foxieWiFi.IsConnected() ? WiFi.localIP().toString()
                                                  : "NOT CONNECTED";
-             disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER), PURPLE);
+             disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
+                                        " and may the schwarz be with you!",
+                                    PURPLE);
          }});
     menuMgr.Add(configMenu);  // menu 2
 
     menuMgr.ActivateMenu(1);  // primary clock screen, implemented as a menu
 
+    // use a while loop instead of loop() ... I just hate globals, OK?
     while (true) {
         rtc.Update();
         menuMgr.Update();
         foxieWiFi.Update();
         disp.Update();
 
-        delay(5);
+        yield();  // necessary on ESP platform to allow WiFi-related code to run
     }
 }
 
@@ -73,7 +76,7 @@ void CheckForSafeMode() {
             foxieWiFi.Update();
             disp.Update();
 
-            delay(5);
+            yield();
         }
     }
 }
