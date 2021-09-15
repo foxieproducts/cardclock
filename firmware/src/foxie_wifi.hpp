@@ -52,7 +52,7 @@ class FoxieWiFi {
 
     bool IsConfigured() { return !WiFi.SSID().isEmpty(); }
 
-    bool IsConnected() { return IsConfigured && WiFi.isConnected(); }
+    bool IsConnected() { return IsConfigured() && WiFi.isConnected(); }
 
   private:
     void Configure() {
