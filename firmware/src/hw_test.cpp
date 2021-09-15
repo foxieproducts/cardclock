@@ -127,7 +127,7 @@ void FWInstallComplete() {
 }
 
 void FWInstallProgress(int cur, int total) {
-    g_display.DrawPixel(85 + map(cur, 0, total, 0, 23), BLUE);
+    g_display.DrawPixel(FIRST_HOUR_LED + map(cur, 0, total, 0, 23), BLUE);
     g_display.Clear();
     g_display.DrawText(3, String(map(cur, 0, total, 0, 100)) + "%", PURPLE);
     g_display.Show();

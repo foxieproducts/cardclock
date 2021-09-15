@@ -21,16 +21,17 @@ class ConfigMenu : public Menu {
               m_settings(settings),
               m_name(name),
               m_values(options) {
-            for (size_t i = 0; i < m_values.size(); ++i) {
-                if (m_values[i] == m_settings[m_name]) {
-                    m_index = i;
-                    break;
-                }
-            }
+            Begin();
         }
 
         String& GetName() { return m_name; }
         String& GetCurrentValue() { return m_values[m_index]; }
+
+        void Begin() {
+            if (m_values[m_index] != m_settings[m_name]) {
+                Reset();
+            }
+        }
 
         void Update() {
             m_display.DrawText(0, m_values[m_index], GRAY);
@@ -42,7 +43,7 @@ class ConfigMenu : public Menu {
                 m_index++;
                 m_display.ScrollVertical(HEIGHT, 1);
             }
-                }
+        }
         void Down() {
             if (m_index > 0) {
                 m_index--;
@@ -51,6 +52,15 @@ class ConfigMenu : public Menu {
         }
 
       protected:
+        void Reset() {
+            for (size_t i = 0; i < m_values.size(); ++i) {
+                if (m_values[i] == m_settings[m_name]) {
+                    m_index = i;
+                    break;
+                }
+            }
+        }
+
         void DrawArrows() {
             int upColor = m_index > 0 ? GREEN : DARK_GREEN;
             int downColor = m_index < m_values.size() - 1 ? GREEN : DARK_GREEN;
@@ -84,7 +94,8 @@ class ConfigMenu : public Menu {
         if (m_curOption) {
             m_curOption->Update();
         } else {
-            m_display.DrawText(0, m_options[m_optionNum].GetName(), GRAY);
+            m_display.DrawText(
+                0, m_options[m_optionNum].GetName().substring(0, 4), GRAY);
 
             m_display.DrawPixel(32, GREEN);
             m_display.DrawPixel(49, GREEN);
@@ -144,6 +155,7 @@ class ConfigMenu : public Menu {
             if (!m_curOption) {
                 m_display.ScrollHorizontal(WIDTH, -1);
                 m_curOption = &m_options[m_optionNum];
+                m_curOption->Begin();
             }
         }
         return true;
