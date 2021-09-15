@@ -21,7 +21,8 @@ Button g_btnDown(PIN_BTN_DOWN, INPUT);
 Button g_btnLeft(PIN_BTN_LEFT, INPUT_PULLUP);
 Button g_btnRight(PIN_BTN_RIGHT, INPUT_PULLUP);
 
-Display g_display;
+Settings g_settings;
+Display g_display(g_settings);
 Rtc g_rtc;
 ESP8266WiFiMulti g_WiFiMulti;
 
