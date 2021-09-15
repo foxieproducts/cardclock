@@ -48,7 +48,7 @@ class FoxieWiFi {
 
         if (m_isInitialized && IsConnected() && !m_isOTAInitialized) {
             MDNS.begin(GetUniqueMDNSName().c_str());
-            m_display.DrawTextScrolling(WiFi.localIP().toString(), GREEN);
+            // m_display.DrawTextScrolling(WiFi.localIP().toString(), GREEN);
             InitializeOTA();
         }
 
