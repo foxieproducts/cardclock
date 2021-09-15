@@ -68,17 +68,19 @@ class FoxieWiFi {
     void Configure() {
         // TODO: Make sure config portal isn't open when calling this
         Initialize();
+
+        m_settings["WIFI"] = "OFF";
+        m_settings["wifi_configured"].clear();
+        m_settings.Save(true);
+
         m_wifiManager.resetSettings();
         WiFi.persistent(true);
+
         m_wifiManager.setConfigPortalTimeout(180);
         m_display.DrawTextScrolling("Connect to Foxie_WiFiSetup", GRAY);
         m_display.Clear();
         m_display.DrawText(1, "<(I)>", BLUE);
         m_display.Update();
-
-        m_settings["WIFI"] = "OFF";
-        m_settings["wifi_configured"].clear();
-        m_settings.Save(true);
 
         if (m_wifiManager.autoConnect("Foxie_WiFiSetup")) {
             m_display.DrawTextScrolling("SUCCESS", GREEN);
