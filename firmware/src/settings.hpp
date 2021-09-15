@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include "elapsed_time.hpp"
+
 enum {
     MAX_SETTINGS_SIZE = 1024,
 };
@@ -32,8 +34,8 @@ class Settings : public DynamicJsonDocument {
         return m_loaded;
     }
 
-    bool Save() {
-        if (IsSameAsSavedFile()) {
+    bool Save(bool force = false) {
+        if (IsSameAsSavedFile() && !force) {
             return true;
         }
 
@@ -48,12 +50,6 @@ class Settings : public DynamicJsonDocument {
 
         return success;
     }
-
-    int AsInt(const char* key) {
-        const String val = getMember(key);
-        return val.toInt();
-    }
-
     bool IsLoaded() { return m_loaded; }
 
   private:

@@ -27,7 +27,8 @@ enum Display_e {
     WIDTH = 17,
     HEIGHT = 5,
     ROUND_LEDS = 24,
-    FIRST_ROUND_LED = WIDTH * HEIGHT,
+    FIRST_HOUR_LED = WIDTH * HEIGHT,
+    FIRST_MINUTE_LED = FIRST_HOUR_LED + 12,
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
     MIN_BRIGHTNESS = 4,
@@ -90,7 +91,7 @@ class Display {
     }
 
     void ClearRoundLEDs(int color = BLACK) {
-        for (int i = FIRST_ROUND_LED; i < FIRST_ROUND_LED + ROUND_LEDS; ++i) {
+        for (int i = FIRST_HOUR_LED; i < TOTAL_LEDS; ++i) {
             m_leds.setPixelColor(i, color);
         }
     }
@@ -151,9 +152,16 @@ class Display {
         ElapsedTime::Delay(delayMs);
     }
 
+    void DrawMinuteLED(const int minute, const int color) {
+        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
+    }
+    void DrawHourLED(const int hour, const int color) {
+        DrawPixel(FIRST_HOUR_LED + hour - 1, color);
+    }
+
     void DrawSecondLEDs(const int minute, const int color) {
-        DrawPixel(85 + GetSecondLED(minute), color);
-        DrawPixel(97 + GetMinuteLED(minute), color);
+        DrawPixel(FIRST_HOUR_LED + GetSecondLED(minute), color);
+        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
     }
 
     int GetMinuteLED(const int minute) {
@@ -255,4 +263,6 @@ class Display {
             }
         }
     }
+
+  public:
 };

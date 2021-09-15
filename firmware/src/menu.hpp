@@ -83,7 +83,7 @@ class MenuManager {
         m_menus[m_pos]->Update();
     }
 
-    void ActivateMenu(const unsigned int menuNum) {
+    void ActivateMenu(size_t menuNum) {
         if (menuNum < m_menus.size()) {
             m_pos = menuNum;
             m_menus[m_pos]->Begin();

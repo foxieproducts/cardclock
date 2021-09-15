@@ -147,9 +147,9 @@ class TimeMenu : public Menu {
             sprintf(text, "%02d", m_second);
             m_display.DrawText(10, text, m_mode == SET_SECOND ? color : GRAY);
         } else {
-            sprintf(
-                text, "%2d",
-                m_settings["24HR"] == "12" ? m_rtc.Conv24to12(m_hour) : m_hour);
+            sprintf(text, "%2d",
+                    m_settings["HOUR_FMT"] == "24" ? m_hour
+                                                   : m_rtc.Conv24to12(m_hour));
             m_display.DrawText(0, text, m_mode == SET_HOUR ? color : GRAY);
 
             sprintf(text, "%02d", m_minute);
@@ -162,10 +162,8 @@ class TimeMenu : public Menu {
 
         m_display.DrawSecondLEDs(m_second,
                                  m_mode == SET_SECOND ? color : WHITE);
-
-        m_display.DrawPixel(85 + m_rtc.Conv24to12(m_hour) - 1,
-                            m_mode == SET_HOUR ? color : WHITE);
-        m_display.DrawPixel(97 + m_display.GetMinuteLED(m_minute),
-                            m_mode == SET_MINUTE ? color : WHITE);
+        m_display.DrawHourLED(m_rtc.Conv24to12(m_hour),
+                              m_mode == SET_HOUR ? color : WHITE);
+        m_display.DrawMinuteLED(m_minute, m_mode == SET_MINUTE ? color : WHITE);
     }
 };
