@@ -80,7 +80,7 @@ class FoxieWiFi {
         m_display.DrawTextScrolling("Connect to Foxie_WiFiSetup", GRAY);
         m_display.Clear();
         m_display.DrawText(1, "<(I)>", BLUE);
-        m_display.Update();
+        m_display.Show();
 
         if (m_wifiManager.autoConnect("Foxie_WiFiSetup")) {
             m_display.DrawTextScrolling("SUCCESS", GREEN);
