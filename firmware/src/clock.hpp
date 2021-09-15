@@ -3,13 +3,13 @@
 #include "menu.hpp"
 #include "rtc.hpp"
 
-class ClockMenu : public Menu {
+class Clock : public Menu {
   private:
     Rtc& m_rtc;
     uint8_t m_colorWheel{0};
 
   public:
-    ClockMenu(Display& display, Rtc& rtc, Settings& settings)
+    Clock(Display& display, Rtc& rtc, Settings& settings)
         : Menu(display, settings), m_rtc(rtc) {}
 
     virtual void Update() {
