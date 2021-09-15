@@ -147,9 +147,10 @@ class ConfigMenu : public Menu {
             if (m_selectedMenuOption >= 0) {
                 m_options[m_selectedMenuOption].Up();
             } else {
-                if (++m_menuOption == m_options.size()) {
-                    m_menuOption = 0;
+                if (m_menuOption-- == 0) {
+                    m_menuOption = m_options.size() - 1;
                 }
+
                 m_display.ScrollVertical(HEIGHT, 1);
             }
         }
@@ -161,9 +162,10 @@ class ConfigMenu : public Menu {
             if (m_selectedMenuOption >= 0) {
                 m_options[m_selectedMenuOption].Down();
             } else {
-                if (m_menuOption-- == 0) {
-                    m_menuOption = m_options.size() - 1;
+                if (++m_menuOption == m_options.size()) {
+                    m_menuOption = 0;
                 }
+
                 m_display.ScrollVertical(HEIGHT, -1);
             }
         }
