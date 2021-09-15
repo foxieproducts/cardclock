@@ -111,7 +111,7 @@ class FoxieWiFi {
                 LittleFS.end();
             }
             m_display.Clear();
-            m_display.DrawText(3, "OTA", DARK_GREEN);
+            m_display.DrawText(1, "RECV", DARK_GREEN);
             m_display.ClearRoundLEDs();
             m_display.Show();
         });
