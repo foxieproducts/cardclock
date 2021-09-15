@@ -142,9 +142,8 @@ class ConfigMenu : public Menu {
                     m_curOption->GetCurrentValue();
 
                 m_curOption = nullptr;
-                return true;
-            } else {
                 m_settings.Save();
+                return true;
             }
         }
         return false;  // exit the settings menu
