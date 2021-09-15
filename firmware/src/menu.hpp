@@ -30,7 +30,7 @@ class MenuManager {
     Settings& m_settings;
 
     std::vector<std::shared_ptr<Menu>> m_menus;
-    int m_pos{0};
+    int m_activeMenu{0};
 
     Button m_btnUp{PIN_BTN_UP, INPUT_PULLUP};
     Button m_btnDown{PIN_BTN_DOWN, INPUT};
@@ -46,47 +46,49 @@ class MenuManager {
         m_btnRight.config.canRepeat = false;
 
         m_btnUp.config.handlerFunc = [&](const Button::Event_e evt) {
-            m_menus[m_pos]->Up(evt);
+            m_menus[m_activeMenu]->Up(evt);
         };
         m_btnDown.config.handlerFunc = [&](const Button::Event_e evt) {
-            m_menus[m_pos]->Down(evt);
+            m_menus[m_activeMenu]->Down(evt);
         };
         m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
-            const bool handled = m_menus[m_pos]->Left(evt);
+            const bool handled = m_menus[m_activeMenu]->Left(evt);
             if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (m_pos == 0) {
+                if (m_activeMenu == 0) {
                     return;
                 }
-                --m_pos;
-                m_menus[m_pos]->Begin();
+                --m_activeMenu;
+                m_menus[m_activeMenu]->Begin();
             }
         };
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
-            const bool handled = m_menus[m_pos]->Right(evt);
+            const bool handled = m_menus[m_activeMenu]->Right(evt);
             if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (m_pos == (int)m_menus.size() - 1) {
+                if (m_activeMenu == (int)m_menus.size() - 1) {
                     return;
                 }
-                m_pos++;
-                m_menus[m_pos]->Begin();
+                m_activeMenu++;
+                m_menus[m_activeMenu]->Begin();
             }
         };
     }
 
     void Add(std::shared_ptr<Menu> menu) {
         m_menus.push_back(menu);
-        m_pos = m_menus.size() - 1;
+        m_activeMenu = m_menus.size() - 1;
     }
+
+    size_t GetActive() { return m_activeMenu; }
 
     void Update() {
         Button::Update();
-        m_menus[m_pos]->Update();
+        m_menus[m_activeMenu]->Update();
     }
 
     void ActivateMenu(size_t menuNum) {
         if (menuNum < m_menus.size()) {
-            m_pos = menuNum;
-            m_menus[m_pos]->Begin();
+            m_activeMenu = menuNum;
+            m_menus[m_activeMenu]->Begin();
         }
     }
 };
