@@ -20,14 +20,15 @@ void setup() {
     FoxieWiFi foxieWiFi(disp, settings);
 
     MenuManager menuMgr(disp, settings);
-    menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));
-    menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc, settings));
+    menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));   // menu 0
+    menuMgr.Add(std::make_shared<ClockMenu>(disp, rtc, settings));  // menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
     configMenu->Add({disp, settings, "HOUR_FMT", {"12", "24"}});
     configMenu->Add({disp, settings, "WIFI", {"OFF", "ON", "CFG"}});
-    menuMgr.Add(configMenu);
-    menuMgr.ActivateMenu(1);
+    menuMgr.Add(configMenu);  // menu 2
+
+    menuMgr.ActivateMenu(1);  // clock menu
 
     while (true) {
         rtc.Update();

@@ -58,16 +58,11 @@ class FoxieWiFi {
             // server.handleClient();
         }
 
-        if (IsConnected()) {
-            m_display.DrawPixel(42, DARK_BLUE);
-        }
-
         m_wifiManager.loop();
     }
 
-    bool IsConfigured() { return !WiFi.SSID().isEmpty(); }
-
-    bool IsConnected() { return IsConfigured() && WiFi.isConnected(); }
+    static bool IsConfigured() { return !WiFi.SSID().isEmpty(); }
+    static bool IsConnected() { return IsConfigured() && WiFi.isConnected(); }
 
   private:
     void Configure() {

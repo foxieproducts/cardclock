@@ -1,4 +1,5 @@
 #pragma once
+#include "foxie_wifi.hpp"
 #include "menu.hpp"
 #include "rtc.hpp"
 
@@ -16,6 +17,10 @@ class ClockMenu : public Menu {
         DrawClockDigits(color);
         DrawSeparator(color);
         DrawAnalog(color);
+
+        if (FoxieWiFi::IsConnected()) {
+            m_display.DrawPixel(42, DARK_BLUE);
+        }
     }
 
     virtual bool Up(const Button::Event_e evt) {
