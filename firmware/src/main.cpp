@@ -17,6 +17,7 @@ void setup() {
 
     Rtc rtc;
     Display disp(settings);
+    FoxieWiFi foxieWiFi(disp, settings);
 
     MenuManager menuMgr(disp, settings);
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));
@@ -28,14 +29,10 @@ void setup() {
     menuMgr.Add(configMenu);
     menuMgr.ActivateMenu(1);
 
-    ElapsedTime waitToInit;
-
-    FoxieWiFi fwifi(disp, settings);
-
     while (true) {
         rtc.Update();
         menuMgr.Update();
-        fwifi.Update();
+        foxieWiFi.Update();
         disp.Update();
 
         delay(5);
