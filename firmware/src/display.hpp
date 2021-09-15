@@ -33,6 +33,7 @@ enum Display_e {
 
     MIN_BRIGHTNESS = 4,
     MAX_BRIGHTNESS = 70,
+    SCROLLING_TEXT_MS = 50,
     SCROLL_DELAY_HORIZONTAL_MS = 10,
     SCROLL_DELAY_VERTICAL_MS = 35,
 
@@ -112,17 +113,19 @@ class Display {
         return textWidth;
     }
 
-    void DrawTextScrolling(String text, int color, int delayMs = 75) {
+    void DrawTextScrolling(String text,
+                           int color,
+                           int delayMs = SCROLLING_TEXT_MS) {
         const auto length = DrawText(0, text, color);
 
-        for (int i = WIDTH; i > WIDTH - length; --i) {
+        for (int i = WIDTH; i > -length; --i) {
             Clear();
             DrawText(i, text, color);
             Show();
             ElapsedTime::Delay(delayMs);
         }
 
-        ElapsedTime::Delay(delayMs * 4);
+        // ElapsedTime::Delay(delayMs * 6);
     }
 
     void DrawTextCentered(String text, int color) {
