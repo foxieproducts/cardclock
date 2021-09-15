@@ -67,6 +67,9 @@ class Rtc {
                 m_rtc.zeroClock();
             }
 
+            m_rtc.clearStatus();
+            m_rtc.clearTimer();
+
             // interrupt every second
             m_rtc.setTimer(TIMER_NUM_SECONDS, TMR_1Hz, true);
 
