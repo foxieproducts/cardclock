@@ -1,58 +1,90 @@
 #pragma once
 #include "elapsed_time.hpp"
+#include "foxie_wifi.hpp"
 #include "menu.hpp"
 
 class ConfigMenu : public Menu {
-  private:
+  public:
     class Option {
-      private:
+      protected:
         Display& m_display;
         Settings& m_settings;
         String m_name;
         std::vector<String> m_values;
         size_t m_index{0};
+        std::function<void()> m_runFuncOnce;
+        bool m_isDone{false};
 
       public:
         Option(Display& display,
                Settings& settings,
                String name,
-               std::initializer_list<String> options)
+               std::initializer_list<String> options = {})
             : m_display(display),
               m_settings(settings),
               m_name(name),
-              m_values(options) {
-            Begin();
-        }
+              m_values(options) {}
+
+        Option(Display& display,
+               Settings& settings,
+               String name,
+               std::function<void()> runFuncOnce)
+            : m_display(display),
+              m_settings(settings),
+              m_name(name),
+              m_runFuncOnce(runFuncOnce) {}
 
         String& GetName() { return m_name; }
         String& GetCurrentValue() { return m_values[m_index]; }
 
-        void Begin() {
-            if (m_values[m_index] != m_settings[m_name]) {
+        virtual void SetValues(std::vector<String> values) {
+            m_values = values;
+            Begin();
+        }
+
+        virtual void Begin() {
+            if (m_values.size() && m_values[m_index] != m_settings[m_name]) {
                 Reset();
+            }
+
+            if (m_runFuncOnce) {
+                m_runFuncOnce();
+                m_isDone = true;
             }
         }
 
-        void Update() {
-            m_display.DrawText(0, m_values[m_index], GRAY);
-            DrawArrows();
+        virtual void Update() {
+            if (m_values.size()) {
+                m_display.DrawText(0, m_values[m_index], GRAY);
+                DrawArrows();
+            }
         }
 
-        void Up() {
+        virtual void Up() {
             if (m_index < m_values.size() - 1) {
                 m_index++;
                 m_display.ScrollVertical(HEIGHT, 1);
             }
         }
-        void Down() {
+        virtual void Down() {
             if (m_index > 0) {
                 m_index--;
                 m_display.ScrollVertical(HEIGHT, -1);
             }
         }
 
+        virtual void Finish() {
+            if (m_values.size()) {
+                m_settings[GetName()] = GetCurrentValue();
+                m_settings.Save();
+            }
+        }
+
+        virtual bool IsDone() { return m_isDone; }
+
       protected:
-        void Reset() {
+        virtual void Reset() {
+            m_index = 0;
             for (size_t i = 0; i < m_values.size(); ++i) {
                 if (m_values[i] == m_settings[m_name]) {
                     m_index = i;
@@ -61,7 +93,7 @@ class ConfigMenu : public Menu {
             }
         }
 
-        void DrawArrows() {
+        virtual void DrawArrows() {
             int upColor = m_index > 0 ? GREEN : DARK_GREEN;
             int downColor = m_index < m_values.size() - 1 ? GREEN : DARK_GREEN;
 
@@ -78,8 +110,8 @@ class ConfigMenu : public Menu {
     };
 
     std::vector<Option> m_options;
-    Option* m_curOption{nullptr};
-    size_t m_optionNum{0};
+    size_t m_menuOption{0};
+    int m_selectedMenuOption{-1};
 
   public:
     ConfigMenu(Display& display, Settings& settings) : Menu(display, settings) {
@@ -91,11 +123,15 @@ class ConfigMenu : public Menu {
     virtual void Update() {
         m_display.Clear(BLACK, true);
 
-        if (m_curOption) {
-            m_curOption->Update();
+        if (m_selectedMenuOption >= 0) {
+            m_options[m_selectedMenuOption].Update();
+            if (m_options[m_selectedMenuOption].IsDone()) {
+                m_options[m_selectedMenuOption].Finish();
+                m_selectedMenuOption = -1;
+            }
         } else {
             m_display.DrawText(
-                0, m_options[m_optionNum].GetName().substring(0, 4), GRAY);
+                0, m_options[m_menuOption].GetName().substring(0, 4), GRAY);
 
             m_display.DrawPixel(32, GREEN);
             m_display.DrawPixel(49, GREEN);
@@ -108,11 +144,11 @@ class ConfigMenu : public Menu {
 
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
-            if (m_curOption) {
-                m_curOption->Up();
+            if (m_selectedMenuOption >= 0) {
+                m_options[m_selectedMenuOption].Up();
             } else {
-                if (++m_optionNum == m_options.size()) {
-                    m_optionNum = 0;
+                if (++m_menuOption == m_options.size()) {
+                    m_menuOption = 0;
                 }
                 m_display.ScrollVertical(HEIGHT, 1);
             }
@@ -122,11 +158,11 @@ class ConfigMenu : public Menu {
 
     virtual bool Down(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
-            if (m_curOption) {
-                m_curOption->Down();
+            if (m_selectedMenuOption >= 0) {
+                m_options[m_selectedMenuOption].Down();
             } else {
-                if (m_optionNum-- == 0) {
-                    m_optionNum = m_options.size() - 1;
+                if (m_menuOption-- == 0) {
+                    m_menuOption = m_options.size() - 1;
                 }
                 m_display.ScrollVertical(HEIGHT, -1);
             }
@@ -137,12 +173,9 @@ class ConfigMenu : public Menu {
     virtual bool Left(const Button::Event_e evt) {
         if (evt == Button::PRESS) {
             m_display.ScrollHorizontal(WIDTH, 1);
-            if (m_curOption) {
-                m_settings[m_curOption->GetName()] =
-                    m_curOption->GetCurrentValue();
-
-                m_curOption = nullptr;
-                m_settings.Save();
+            if (m_selectedMenuOption >= 0) {
+                m_options[m_selectedMenuOption].Finish();
+                m_selectedMenuOption = -1;
                 return true;
             }
         }
@@ -151,10 +184,10 @@ class ConfigMenu : public Menu {
 
     virtual bool Right(const Button::Event_e evt) {
         if (evt == Button::PRESS) {
-            if (!m_curOption) {
+            if (m_selectedMenuOption == -1) {
                 m_display.ScrollHorizontal(WIDTH, -1);
-                m_curOption = &m_options[m_optionNum];
-                m_curOption->Begin();
+                m_selectedMenuOption = m_menuOption;
+                m_options[m_selectedMenuOption].Begin();
             }
         }
         return true;
