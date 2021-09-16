@@ -109,6 +109,7 @@ class FoxieWiFi {
             if (ArduinoOTA.getCommand() == U_FS) {
                 LittleFS.end();
             }
+            m_display.SetBrightness(30);
             m_display.Clear();
             m_display.DrawText(1, "RECV", DARK_GREEN);
             m_display.ClearRoundLEDs();
@@ -126,6 +127,7 @@ class FoxieWiFi {
         });
         ArduinoOTA.onError([&](ota_error_t error) {
             m_display.DrawTextScrolling("OTA ERR:" + String(error), RED);
+            ESP.restart();
         });
 
         ArduinoOTA.setHostname(GetUniqueMDNSName().c_str());
