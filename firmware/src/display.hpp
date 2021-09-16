@@ -32,8 +32,10 @@ enum Display_e {
     FIRST_MINUTE_LED = FIRST_HOUR_LED + 12,
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
-    MIN_BRIGHTNESS = 4,
-    MAX_BRIGHTNESS = 70,
+    MIN_BRIGHTNESS = 1,
+    MIN_BRIGHTNESS_DEFAULT = 4,
+    MAX_BRIGHTNESS = 100,
+    MAX_BRIGHTNESS_DEFAULT = 70,
     SCROLLING_TEXT_MS = 50,
     SCROLL_DELAY_HORIZONTAL_MS = 10,
     SCROLL_DELAY_VERTICAL_MS = 35,
@@ -68,18 +70,35 @@ class Display {
   public:
     Display(Settings& settings) : m_settings(settings) {
         m_leds.begin();
+
         // make sure the blue LED on the ESP-12F is off
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWrite(LED_BUILTIN, HIGH);
+
+        if (!settings.containsKey("MINB")) {
+            settings["MINB"] = String(MIN_BRIGHTNESS_DEFAULT);
+        }
+        if (!settings.containsKey("MAXB")) {
+            settings["MAXB"] = String(MAX_BRIGHTNESS_DEFAULT);
+        }
     }
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
 
     void Update() {
+        int minBrightness = m_settings["MINB"].as<int>();
+        int maxBrightness = m_settings["MAXB"].as<int>();
+
+        // if (m_settings.containsKey("MINB")) {
+        //     minBrightness = ;
+        // }
+        // if (m_settings.containsKey("MAXB")) {
+        //     maxBrightness = ;
+        // }
+
         m_currentBrightness = m_lightSensor.Get();
         SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
-                          m_settings["min_brightness"] | MIN_BRIGHTNESS,
-                          m_settings["max_brightness"] | MAX_BRIGHTNESS));
+                          minBrightness, maxBrightness));
         Show();
     }
 
