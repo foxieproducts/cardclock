@@ -14,14 +14,12 @@
 #include "settings.hpp"
 #include "time_menu.hpp"
 
-void CheckForSafeMode();
+void CheckButtonsOnBoot();
 
 void setup() {
-    CheckForSafeMode();
+    CheckButtonsOnBoot();
 
     Settings settings;
-    // settings.clear();
-    // ESP.eraseConfig();
 
     Rtc rtc;
     Display disp(settings);
@@ -34,6 +32,7 @@ void setup() {
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
     configMenu->AddTextSetting("HOUR_FMT", {"12", "24"});
+    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime(); });
     configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting("ADDR", [&]() {
         String ip =
@@ -64,15 +63,18 @@ void setup() {
     }
 }
 
-void CheckForSafeMode() {
+void CheckButtonsOnBoot() {
+    pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
+    pinMode(PIN_BTN_UP, INPUT_PULLUP);
+    Settings settings;
+    Display disp(settings);
+    disp.SetBrightness(30);
+    FoxieWiFi foxieWiFi(disp, settings);
+
     // if left button is held on boot, go into safe mode. this still allows
     // ArduinoOTA to function and the firmware can be updated using espota
     // just in case you accidentally brick the runtime
-    pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
     if (digitalRead(PIN_BTN_LEFT) == LOW) {
-        Settings settings;
-        Display disp(settings);
-        FoxieWiFi foxieWiFi(disp, settings);
         disp.DrawTextScrolling("SAFE MODE - " + WiFi.localIP().toString(),
                                ORANGE);
         settings["DEVL"] == "ON";
@@ -83,6 +85,14 @@ void CheckForSafeMode() {
 
             yield();
         }
+    }
+
+    // if up button is held on boot, clear settings.
+    if (digitalRead(PIN_BTN_UP) == LOW) {
+        disp.DrawTextScrolling("SETTINGS CLEARED", PURPLE);
+        settings.clear();
+        settings.Save();
+        ESP.eraseConfig();
     }
 }
 
