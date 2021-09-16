@@ -44,7 +44,21 @@ void setup() {
                                    " and may the schwarz be with you!",
                                PURPLE);
     });
+
+    configMenu->AddRangeSetting("MINB", MIN_BRIGHTNESS,
+                                settings["MAXB"].as<int>());
+    configMenu->AddRangeSetting("MAXB", settings["MINB"].as<int>(),
+                                MAX_BRIGHTNESS);
+
     configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
+    configMenu->AddRunFuncSetting("UPDT", [&]() {
+        if (!WiFi.isConnected()) {
+            disp.DrawTextScrolling("Not connected to WiFi", ORANGE);
+            return;
+        }
+
+        disp.DrawTextScrolling("Checking for update...", PURPLE);
+    });
 
     menuMgr.Add(configMenu);  // menu 2
 
