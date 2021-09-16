@@ -123,6 +123,8 @@ class ConfigMenu : public Menu {
     virtual void Update() {
         m_display.Clear();
 
+        ShowMenuOptionPositionOnHours();
+
         if (m_selectedMenuOption >= 0) {
             m_options[m_selectedMenuOption].Update();
 
@@ -132,7 +134,6 @@ class ConfigMenu : public Menu {
             }
         } else {
             ShowCurrentOptionName();
-            ShowMenuOptionPositionOnHours();
         }
     }
 
