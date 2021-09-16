@@ -41,10 +41,6 @@ class Rtc {
         m_rtc.setTime(hour, minute, second);
         m_millisAtInterrupt = millis();
     }
-    void SetDate() {
-        // m_rtc.setDate()
-    }
-
     int Conv24to12(int hour) {
         if (hour > 12) {
             hour -= 12;
