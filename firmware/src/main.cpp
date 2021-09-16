@@ -31,7 +31,7 @@ void setup() {
     menuMgr.Add(std::make_shared<Clock>(disp, rtc, settings));  // clock menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
-    configMenu->AddTextSetting("HOUR_FMT", {"12", "24"});
+    configMenu->AddTextSetting("HOUR", {"12", "24"});
     configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime(); });
     configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting("ADDR", [&]() {

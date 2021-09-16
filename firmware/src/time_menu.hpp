@@ -147,9 +147,9 @@ class TimeMenu : public Menu {
             sprintf(text, "%02d", m_second);
             m_display.DrawText(10, text, m_mode == SET_SECOND ? color : GRAY);
         } else {
-            sprintf(text, "%2d",
-                    m_settings["HOUR_FMT"] == "24" ? m_hour
-                                                   : m_rtc.Conv24to12(m_hour));
+            sprintf(
+                text, "%2d",
+                m_settings["HOUR"] == "24" ? m_hour : m_rtc.Conv24to12(m_hour));
             m_display.DrawText(0, text, m_mode == SET_HOUR ? color : GRAY);
 
             sprintf(text, "%02d", m_minute);
