@@ -57,10 +57,10 @@ class ConfigMenu : public Menu {
         m_display.DrawText(
             0, m_options[m_menuOption]->GetName().substring(0, 4), GRAY);
 
-        m_display.DrawPixel(32, GREEN);
-        m_display.DrawPixel(49, GREEN);
+        // m_display.DrawPixel(32, GREEN);
+        // m_display.DrawPixel(49, GREEN);
         m_display.DrawPixel(50, GREEN);
-        m_display.DrawPixel(66, GREEN);
+        // m_display.DrawPixel(66, GREEN);
     }
 
     void ShowMenuOptionPositionOnHours() {
