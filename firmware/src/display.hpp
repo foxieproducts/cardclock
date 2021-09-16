@@ -21,6 +21,8 @@ enum Colors_e {
     DARK_RED = 0x7F0000,
     DARK_GREEN = 0x007F00,
     DARK_BLUE = 0x00007F,
+    DARK_ORANGE = 0xFF8C00,
+    DARK_PURPLE = 0x301934,
     DARK_GRAY = 0x3F3F3F,
 };
 
