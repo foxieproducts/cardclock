@@ -57,8 +57,6 @@ class FoxieWiFi {
             MDNS.update();
             // server.handleClient();
         }
-
-        m_wifiManager.loop();
     }
 
     static bool IsConfigured() { return !WiFi.SSID().isEmpty(); }
