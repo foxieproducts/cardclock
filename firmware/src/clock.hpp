@@ -10,7 +10,11 @@ class Clock : public Menu {
 
   public:
     Clock(Display& display, Rtc& rtc, Settings& settings)
-        : Menu(display, settings), m_rtc(rtc) {}
+        : Menu(display, settings), m_rtc(rtc) {
+        if (!settings.containsKey("WLED")) {
+            settings["WLED"] = "ON";
+        }
+    }
 
     virtual void Update() {
         int color = Display::ColorWheel(m_colorWheel);
@@ -18,7 +22,7 @@ class Clock : public Menu {
         DrawSeparator(color);
         DrawAnalog(color);
 
-        if (WiFi.isConnected()) {
+        if (WiFi.isConnected() && m_settings["WLED"] == "ON") {
             m_display.DrawPixel(42, DARK_GRAY);
         }
     }

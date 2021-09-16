@@ -45,10 +45,9 @@ void setup() {
                                PURPLE);
     });
 
-    configMenu->AddRangeSetting("MINB", MIN_BRIGHTNESS,
-                                settings["MAXB"].as<int>());
-    configMenu->AddRangeSetting("MAXB", settings["MINB"].as<int>(),
-                                MAX_BRIGHTNESS);
+    configMenu->AddRangeSetting("MINB", MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    configMenu->AddRangeSetting("MAXB", MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    configMenu->AddTextSetting("WLED", {"OFF", "ON"});
 
     configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
     configMenu->AddRunFuncSetting("UPDT", [&]() {

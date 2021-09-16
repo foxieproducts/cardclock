@@ -32,8 +32,8 @@ enum Display_e {
     FIRST_MINUTE_LED = FIRST_HOUR_LED + 12,
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
-    MIN_BRIGHTNESS = 1,
-    MIN_BRIGHTNESS_DEFAULT = 4,
+    MIN_BRIGHTNESS = 4,
+    MIN_BRIGHTNESS_DEFAULT = 8,
     MAX_BRIGHTNESS = 100,
     MAX_BRIGHTNESS_DEFAULT = 70,
     SCROLLING_TEXT_MS = 50,
@@ -88,13 +88,6 @@ class Display {
     void Update() {
         int minBrightness = m_settings["MINB"].as<int>();
         int maxBrightness = m_settings["MAXB"].as<int>();
-
-        // if (m_settings.containsKey("MINB")) {
-        //     minBrightness = ;
-        // }
-        // if (m_settings.containsKey("MAXB")) {
-        //     maxBrightness = ;
-        // }
 
         m_currentBrightness = m_lightSensor.Get();
         SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
