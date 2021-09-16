@@ -35,14 +35,14 @@ void setup() {
     configMenu->Add({disp, settings, "HOUR_FMT", {"12", "24"}});
     configMenu->Add({disp, settings, "WIFI", {"OFF", "ON", "CFG"}});
     configMenu->Add({disp, settings, "ADDR", [&]() {
-                         String ip = wifi.IsConnected()
+                         String ip = WiFi.isConnected()
                                          ? WiFi.localIP().toString()
                                          : "NOT CONNECTED";
                          disp.DrawTextScrolling(ip, GREEN);
                      }});
     configMenu->Add(
         {disp, settings, "VER", [&]() {
-             String ip = wifi.IsConnected() ? WiFi.localIP().toString()
+             String ip = WiFi.isConnected() ? WiFi.localIP().toString()
                                             : "NOT CONNECTED";
              disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
                                         " and may the schwarz be with you!",
