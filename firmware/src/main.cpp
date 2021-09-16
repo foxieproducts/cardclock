@@ -13,6 +13,7 @@
 #include "option.hpp"
 #include "settings.hpp"
 #include "time_menu.hpp"
+#include "updater.hpp"
 
 void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
@@ -51,12 +52,9 @@ void setup() {
 
     configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
     configMenu->AddRunFuncSetting("UPDT", [&]() {
-        if (!WiFi.isConnected()) {
-            disp.DrawTextScrolling("Not connected to WiFi", ORANGE);
-            return;
-        }
-
-        disp.DrawTextScrolling("Checking for update...", PURPLE);
+       
+        Updater updater(disp);
+        updater.Download();
     });
 
     menuMgr.Add(configMenu);  // menu 2
@@ -87,7 +85,7 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
     // ArduinoOTA to function and the firmware can be updated using espota
     // just in case you accidentally brick the runtime
     if (digitalRead(PIN_BTN_LEFT) == LOW) {
-        display.DrawText(1, "SAFE", ORANGE);
+        display.DrawTextCentered("SAFE", ORANGE);
         settings["DEVL"] == "ON";
         while (true) {
             wifi.Update();

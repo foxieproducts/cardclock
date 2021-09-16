@@ -18,9 +18,6 @@ class FoxieWiFi {
   private:
     Display& m_display;
     Settings& m_settings;
-    AsyncWebServer m_server{80};
-    DNSServer m_dns;
-    AsyncWiFiManager m_wifiManager{&m_server, &m_dns};
     bool m_isInitialized{false};
     bool m_isOTAInitialized{false};
 
@@ -70,16 +67,20 @@ class FoxieWiFi {
         m_settings["wifi_configured"].clear();
         m_settings.Save(true);
 
-        m_wifiManager.resetSettings();
+        AsyncWebServer server{80};
+        DNSServer dns;
+        AsyncWiFiManager wifiManager{&server, &dns};
+
+        wifiManager.resetSettings();
         WiFi.persistent(true);
 
-        m_wifiManager.setConfigPortalTimeout(180);
+        wifiManager.setConfigPortalTimeout(180);
         m_display.DrawTextScrolling("Connect to Foxie_WiFiSetup", GRAY);
         m_display.Clear();
         m_display.DrawText(1, "<(I)>", BLUE);
         m_display.Show();
 
-        if (m_wifiManager.autoConnect("Foxie_WiFiSetup")) {
+        if (wifiManager.autoConnect("Foxie_WiFiSetup")) {
             m_display.DrawTextScrolling("SUCCESS", GREEN);
             m_settings["WIFI"] = "ON";
             m_settings["wifi_configured"] = "1";
@@ -109,13 +110,13 @@ class FoxieWiFi {
             }
             m_display.SetBrightness(30);
             m_display.Clear();
-            m_display.DrawText(1, "RECV", DARK_GREEN);
+            m_display.DrawTextCentered("RECV", DARK_GREEN);
             m_display.ClearRoundLEDs();
             m_display.Show();
         });
         ArduinoOTA.onEnd([&]() {
             m_display.DrawTextScrolling("Do not unplug", GRAY);
-            m_display.DrawText(1, "FLSH", ORANGE);
+            m_display.DrawTextCentered("FLSH", ORANGE);
             m_display.Show();
         });
         ArduinoOTA.onProgress([&](unsigned int progress, unsigned int total) {
