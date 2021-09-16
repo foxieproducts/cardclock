@@ -46,7 +46,7 @@ class FoxieWiFi {
             m_isOTAInitialized = false;
         }
 
-        if (m_isInitialized && IsConnected() && !m_isOTAInitialized &&
+        if (m_isInitialized && WiFi.isConnected() && !m_isOTAInitialized &&
             m_settings["DEVL"] == "ON") {
             MDNS.begin(GetUniqueMDNSName().c_str());
             InitializeOTA();
@@ -62,7 +62,6 @@ class FoxieWiFi {
     }
 
     static bool IsConfigured() { return !WiFi.SSID().isEmpty(); }
-    static bool IsConnected() { return IsConfigured() && WiFi.isConnected(); }
 
   private:
     void Configure() {
@@ -116,8 +115,7 @@ class FoxieWiFi {
             m_display.Show();
         });
         ArduinoOTA.onEnd([&]() {
-            m_display.DrawTextScrolling("This will take a few seconds...",
-                                        GRAY);
+            m_display.DrawTextScrolling("Do not unplug", GRAY);
             m_display.DrawText(1, "FLSH", ORANGE);
             m_display.Show();
         });

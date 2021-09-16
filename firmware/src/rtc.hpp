@@ -23,9 +23,12 @@ class Rtc {
             Initialize();
         }
 
-        if (m_receivedInterrupt) {
+        // ideally, we get interrupted every 1 second. However, sometimes the
+        // PCF8563 seems to get confused and send interrupts once a minute
+        if (m_receivedInterrupt || Millis() > 1000) {
             m_rtc.getDateTime();
             m_receivedInterrupt = false;
+            m_millisAtInterrupt = millis();
         }
     }
 
@@ -36,6 +39,10 @@ class Rtc {
     int Millis() { return millis() - m_millisAtInterrupt; }
     void SetTime(byte hour, byte minute, byte second) {
         m_rtc.setTime(hour, minute, second);
+        m_millisAtInterrupt = millis();
+    }
+    void SetDate() {
+        // m_rtc.setDate()
     }
 
     int Conv24to12(int hour) {
@@ -83,8 +90,5 @@ class Rtc {
         attachInterrupt(digitalPinToInterrupt(PIN_RTC_INTERRUPT), InterruptISR,
                         FALLING);
     }
-    static inline void IRAM_ATTR InterruptISR() {
-        m_millisAtInterrupt = millis();
-        m_receivedInterrupt = true;
-    }
+    static inline void IRAM_ATTR InterruptISR() { m_receivedInterrupt = true; }
 };

@@ -18,7 +18,7 @@ class Clock : public Menu {
         DrawSeparator(color);
         DrawAnalog(color);
 
-        if (FoxieWiFi::IsConnected()) {
+        if (WiFi.isConnected()) {
             m_display.DrawPixel(42, DARK_GRAY);
         }
     }

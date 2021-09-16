@@ -8,6 +8,7 @@
 #include "clock.hpp"
 #include "config_menu.hpp"
 #include "display.hpp"
+#include "foxie_ntp.hpp"
 #include "foxie_wifi.hpp"
 #include "settings.hpp"
 #include "time_menu.hpp"
@@ -23,7 +24,8 @@ void setup() {
 
     Rtc rtc;
     Display disp(settings);
-    FoxieWiFi foxieWiFi(disp, settings);
+    FoxieNTP ntp(settings, rtc);
+    FoxieWiFi wifi(disp, settings);
     MenuManager menuMgr(disp, settings);
 
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));  // menu 0
@@ -33,15 +35,15 @@ void setup() {
     configMenu->Add({disp, settings, "HOUR_FMT", {"12", "24"}});
     configMenu->Add({disp, settings, "WIFI", {"OFF", "ON", "CFG"}});
     configMenu->Add({disp, settings, "ADDR", [&]() {
-                         String ip = foxieWiFi.IsConnected()
+                         String ip = wifi.IsConnected()
                                          ? WiFi.localIP().toString()
                                          : "NOT CONNECTED";
                          disp.DrawTextScrolling(ip, GREEN);
                      }});
     configMenu->Add(
         {disp, settings, "VER", [&]() {
-             String ip = foxieWiFi.IsConnected() ? WiFi.localIP().toString()
-                                                 : "NOT CONNECTED";
+             String ip = wifi.IsConnected() ? WiFi.localIP().toString()
+                                            : "NOT CONNECTED";
              disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
                                         " and may the schwarz be with you!",
                                     PURPLE);
@@ -55,8 +57,9 @@ void setup() {
     // use a while loop instead of loop() ... I just hate globals, OK?
     while (true) {
         rtc.Update();
+        ntp.Update();
         menuMgr.Update();
-        foxieWiFi.Update();
+        wifi.Update();
         disp.Update();
 
         yield();  // necessary on ESP platform to allow WiFi-related code to run
@@ -72,7 +75,8 @@ void CheckForSafeMode() {
         Settings settings;
         Display disp(settings);
         FoxieWiFi foxieWiFi(disp, settings);
-        disp.DrawText(1, "SAFE", ORANGE);
+        disp.DrawTextScrolling("SAFE MODE - " + WiFi.localIP().toString(),
+                               ORANGE);
         settings["DEVL"] == "ON";
 
         while (true) {
