@@ -114,30 +114,47 @@ class ConfigMenu : public Menu {
     int m_selectedMenuOption{-1};
 
   public:
-    ConfigMenu(Display& display, Settings& settings) : Menu(display, settings) {
-        // TODO: move these out to main.cpp where the menu is initialized
-    }
+    ConfigMenu(Display& display, Settings& settings)
+        : Menu(display, settings) {}
 
     void Add(Option opt) { m_options.push_back(opt); }
 
     virtual void Update() {
-        m_display.Clear(BLACK, true);
+        m_display.Clear();
 
         if (m_selectedMenuOption >= 0) {
             m_options[m_selectedMenuOption].Update();
+        
             if (m_options[m_selectedMenuOption].IsDone()) {
                 m_options[m_selectedMenuOption].Finish();
                 m_selectedMenuOption = -1;
             }
         } else {
-            m_display.DrawText(
-                0, m_options[m_menuOption].GetName().substring(0, 4), GRAY);
-
-            m_display.DrawPixel(32, GREEN);
-            m_display.DrawPixel(49, GREEN);
-            m_display.DrawPixel(50, GREEN);
-            m_display.DrawPixel(66, GREEN);
+            ShowCurrentOptionName();
+            ShowMenuOptionPositionOnHours();
         }
+    }
+
+    void ShowCurrentOptionName() {
+        m_display.DrawText(0, m_options[m_menuOption].GetName().substring(0, 4),
+                           GRAY);
+
+        m_display.DrawPixel(32, GREEN);
+        m_display.DrawPixel(49, GREEN);
+        m_display.DrawPixel(50, GREEN);
+        m_display.DrawPixel(66, GREEN);
+    }
+
+    void ShowMenuOptionPositionOnHours() {
+        m_display.ClearRoundLEDs();
+        for (size_t i = 0; i < 12; ++i) {
+            if (i < m_options.size()) {
+                m_display.DrawHourLED(i + 1, DARK_GREEN);
+            } else {
+                m_display.DrawHourLED(i + 1, GRAY);
+            }
+        }
+        m_display.DrawHourLED(m_menuOption + 1, GREEN);
     }
 
     virtual void Begin() { m_display.ScrollHorizontal(WIDTH, -1); }
