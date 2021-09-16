@@ -8,7 +8,7 @@
 #include "light_sensor.hpp"
 #include "settings.hpp"
 
-enum Colors {
+enum Colors_e {
     BLACK = 0x000000,
     GRAY = 0x7F7F7F,
     WHITE = 0xFFFFFF,
@@ -34,7 +34,7 @@ enum Display_e {
 
     MIN_BRIGHTNESS = 4,
     MIN_BRIGHTNESS_DEFAULT = 8,
-    MAX_BRIGHTNESS = 100,
+    MAX_BRIGHTNESS = 150,
     MAX_BRIGHTNESS_DEFAULT = 70,
     SCROLLING_TEXT_MS = 50,
     SCROLL_DELAY_HORIZONTAL_MS = 10,
