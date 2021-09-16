@@ -10,6 +10,7 @@
 #include "display.hpp"
 #include "foxie_ntp.hpp"
 #include "foxie_wifi.hpp"
+#include "option.hpp"
 #include "settings.hpp"
 #include "time_menu.hpp"
 
@@ -32,23 +33,19 @@ void setup() {
     menuMgr.Add(std::make_shared<Clock>(disp, rtc, settings));  // clock menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
-    configMenu->Add({disp, settings, "HOUR_FMT", {"12", "24"}});
-    configMenu->Add({disp, settings, "WIFI", {"OFF", "ON", "CFG"}});
-    configMenu->Add({disp, settings, "ADDR", [&]() {
-                         String ip = WiFi.isConnected()
-                                         ? WiFi.localIP().toString()
-                                         : "NOT CONNECTED";
-                         disp.DrawTextScrolling(ip, GREEN);
-                     }});
-    configMenu->Add(
-        {disp, settings, "VER", [&]() {
-             String ip = WiFi.isConnected() ? WiFi.localIP().toString()
-                                            : "NOT CONNECTED";
-             disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
-                                        " and may the schwarz be with you!",
-                                    PURPLE);
-         }});
-    configMenu->Add({disp, settings, "DEVL", {"OFF", "ON"}});
+    configMenu->AddTextSetting("HOUR_FMT", {"12", "24"});
+    configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
+    configMenu->AddRunFuncSetting("ADDR", [&]() {
+        String ip =
+            WiFi.isConnected() ? WiFi.localIP().toString() : "NOT CONNECTED";
+        disp.DrawTextScrolling(ip, GREEN);
+    });
+    configMenu->AddRunFuncSetting("VER", [&]() {
+        disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
+                                   " and may the schwarz be with you!",
+                               PURPLE);
+    });
+    configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
 
     menuMgr.Add(configMenu);  // menu 2
 
@@ -62,7 +59,8 @@ void setup() {
         wifi.Update();
         disp.Update();
 
-        yield();  // necessary on ESP platform to allow WiFi-related code to run
+        yield();  // necessary on ESP platform to allow WiFi-related code to
+                  // run
     }
 }
 
