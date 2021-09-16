@@ -14,18 +14,18 @@
 #include "settings.hpp"
 #include "time_menu.hpp"
 
-void CheckButtonsOnBoot();
+void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
 void setup() {
-    CheckButtonsOnBoot();
-
     Settings settings;
-
-    Rtc rtc;
     Display disp(settings);
-    FoxieNTP ntp(settings, rtc);
     FoxieWiFi wifi(disp, settings);
+
+    CheckButtonsOnBoot(settings, disp, wifi);
+
     MenuManager menuMgr(disp, settings);
+    Rtc rtc;
+    FoxieNTP ntp(settings, rtc);
 
     menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));  // menu 0
     menuMgr.Add(std::make_shared<Clock>(disp, rtc, settings));  // clock menu 1
@@ -63,33 +63,31 @@ void setup() {
     }
 }
 
-void CheckButtonsOnBoot() {
-    pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
+void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
     pinMode(PIN_BTN_UP, INPUT_PULLUP);
-    Settings settings;
-    Display disp(settings);
-    disp.SetBrightness(30);
-    FoxieWiFi foxieWiFi(disp, settings);
+    pinMode(PIN_BTN_DOWN, INPUT);
+    pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
+    pinMode(PIN_BTN_RIGHT, INPUT_PULLUP);
+    display.SetBrightness(30);
 
     // if left button is held on boot, go into safe mode. this still allows
     // ArduinoOTA to function and the firmware can be updated using espota
     // just in case you accidentally brick the runtime
     if (digitalRead(PIN_BTN_LEFT) == LOW) {
-        disp.DrawTextScrolling("SAFE MODE - " + WiFi.localIP().toString(),
-                               ORANGE);
+        display.DrawText(1, "SAFE", ORANGE);
         settings["DEVL"] == "ON";
-
         while (true) {
-            foxieWiFi.Update();
-            disp.Update();
+            wifi.Update();
+            display.Update();
 
-            yield();
+            yield();  // necessary on ESP platform to allow WiFi-related code
+                      // to run
         }
     }
 
     // if up button is held on boot, clear settings.
     if (digitalRead(PIN_BTN_UP) == LOW) {
-        disp.DrawTextScrolling("SETTINGS CLEARED", PURPLE);
+        display.DrawTextScrolling("SETTINGS CLEARED", PURPLE);
         settings.clear();
         settings.Save();
         ESP.eraseConfig();
