@@ -16,12 +16,24 @@ class ConfigMenu : public Menu {
         : Menu(display, settings) {}
 
     void Add(std::shared_ptr<Option> opt) { m_options.push_back(opt); }
-    void AddTextSetting(String name, std::vector<String> values) {
+    void AddTextSetting(String name,
+                        std::vector<String> values,
+                        std::function<void()> finishFunc = nullptr) {
         m_options.push_back(std::make_shared<TextListOption>(
-            m_display, m_settings, name, values));
+            m_display, m_settings, name, values, finishFunc));
     }
-    void AddRunFuncSetting(String name, std::function<void()> runFuncOnce) {
-        m_options.push_back(std::make_shared<OneShotOption>(name, runFuncOnce));
+    void AddRunFuncSetting(String name,
+                           std::function<void()> runFuncOnce,
+                           std::function<void()> finishFunc = nullptr) {
+        m_options.push_back(
+            std::make_shared<OneShotOption>(name, runFuncOnce, finishFunc));
+    }
+    void AddRangeSetting(String name,
+                         const int min,
+                         const int max,
+                         std::function<void()> finishFunc = nullptr) {
+        m_options.push_back(std::make_shared<RangeOption>(
+            m_display, m_settings, name, min, max, finishFunc));
     }
 
     virtual void Update() {
