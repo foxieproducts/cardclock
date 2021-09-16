@@ -94,18 +94,19 @@ class ConfigMenu : public Menu {
         }
 
         virtual void DrawArrows() {
-            int upColor = m_index > 0 ? GREEN : DARK_GREEN;
-            int downColor = m_index < m_values.size() - 1 ? GREEN : DARK_GREEN;
+            const int downColor = m_index > 0 ? GREEN : DARK_GREEN;
+            const int upColor =
+                m_index < m_values.size() - 1 ? GREEN : DARK_GREEN;
 
-            m_display.DrawPixel(15, downColor);
-            m_display.DrawPixel(31, downColor);
-            m_display.DrawPixel(32, downColor);
-            m_display.DrawPixel(33, downColor);
+            m_display.DrawPixel(15, upColor);
+            m_display.DrawPixel(31, upColor);
+            m_display.DrawPixel(32, upColor);
+            m_display.DrawPixel(33, upColor);
 
-            m_display.DrawPixel(65, upColor);
-            m_display.DrawPixel(66, upColor);
-            m_display.DrawPixel(67, upColor);
-            m_display.DrawPixel(83, upColor);
+            m_display.DrawPixel(65, downColor);
+            m_display.DrawPixel(66, downColor);
+            m_display.DrawPixel(67, downColor);
+            m_display.DrawPixel(83, downColor);
         }
     };
 
@@ -124,7 +125,7 @@ class ConfigMenu : public Menu {
 
         if (m_selectedMenuOption >= 0) {
             m_options[m_selectedMenuOption].Update();
-        
+
             if (m_options[m_selectedMenuOption].IsDone()) {
                 m_options[m_selectedMenuOption].Finish();
                 m_selectedMenuOption = -1;
