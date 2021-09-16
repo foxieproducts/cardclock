@@ -46,6 +46,8 @@ void setup() {
                                         " and may the schwarz be with you!",
                                     PURPLE);
          }});
+    configMenu->Add({disp, settings, "DEVL", {"OFF", "ON"}});
+
     menuMgr.Add(configMenu);  // menu 2
 
     menuMgr.ActivateMenu(1);  // primary clock screen, implemented as a menu
@@ -71,6 +73,7 @@ void CheckForSafeMode() {
         Display disp(settings);
         FoxieWiFi foxieWiFi(disp, settings);
         disp.DrawText(1, "SAFE", ORANGE);
+        settings["DEVL"] == "ON";
 
         while (true) {
             foxieWiFi.Update();

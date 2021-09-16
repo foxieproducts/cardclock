@@ -46,13 +46,13 @@ class FoxieWiFi {
             m_isOTAInitialized = false;
         }
 
-        if (m_isInitialized && IsConnected() && !m_isOTAInitialized) {
+        if (m_isInitialized && IsConnected() && !m_isOTAInitialized &&
+            m_settings["DEVL"] == "ON") {
             MDNS.begin(GetUniqueMDNSName().c_str());
-            // m_display.DrawTextScrolling(WiFi.localIP().toString(), GREEN);
             InitializeOTA();
         }
 
-        if (m_isOTAInitialized) {
+        if (m_isOTAInitialized && m_settings["DEVL"] == "ON") {
             ArduinoOTA.handle();
             MDNS.update();
             // server.handleClient();
@@ -116,7 +116,8 @@ class FoxieWiFi {
             m_display.Show();
         });
         ArduinoOTA.onEnd([&]() {
-            m_display.Clear();
+            m_display.DrawTextScrolling("This will take a few seconds...",
+                                        GRAY);
             m_display.DrawText(1, "FLSH", ORANGE);
             m_display.Show();
         });
