@@ -2,6 +2,7 @@
 #include <Adafruit_NeoPixel.h>  // for communication with WS2812B LEDs
 #include <map>                  // for std::map
 #include <vector>               // for std::vector
+#include "button.hpp"
 #include "characters.hpp"
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"
@@ -122,10 +123,11 @@ class Display {
             Clear();
             DrawText(i, text, color);
             Show();
-            ElapsedTime::Delay(delayMs);
-        }
 
-        // ElapsedTime::Delay(delayMs * 6);
+            // pressing a button will speed up a long blocking scrolling message
+            ElapsedTime::Delay(Button::AreAnyButtonsPressed() ? delayMs / 3
+                                                              : delayMs);
+        }
     }
 
     void DrawTextCentered(String text, int color) {

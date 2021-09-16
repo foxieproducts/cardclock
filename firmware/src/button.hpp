@@ -77,6 +77,13 @@ class Button {
         m_wasPressed = false;
     }
 
+    static bool AreAnyButtonsPressed() {
+        return digitalRead(PIN_BTN_UP) == LOW ||
+               digitalRead(PIN_BTN_DOWN) == LOW ||
+               digitalRead(PIN_BTN_LEFT) == LOW ||
+               digitalRead(PIN_BTN_RIGHT) == LOW;
+    }
+
   private:
     void CheckForPinStateChange() {
         if (m_timeInState.Ms() < config.debounceTime) {
