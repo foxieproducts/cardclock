@@ -24,15 +24,12 @@ class Updater {
             return;
         }
 
-        m_display.DrawTextCentered("WAIT", GRAY);
-        m_display.Show();
-
         ESPhttpUpdate.onStart([&]() {
             m_display.ClearRoundLEDs(DARK_GRAY);
             m_display.Show();
         });
         ESPhttpUpdate.onEnd([&]() {
-            m_display.DrawTextScrolling("Do not unplug", GRAY);
+            m_display.Clear();
             m_display.DrawTextCentered("FLSH", ORANGE);
             m_display.Show();
         });
@@ -55,6 +52,13 @@ class Updater {
         // if successful, this will reboot before returning
         WiFiClientSecure client;
         client.setInsecure();
+
+        // waiting a little bit seems to be helpful before starting the update.
+        // otherwise, calling ESPhttpUpdate.update() seems to randomly crash.
+        m_display.DrawTextCentered("WAIT", GRAY);
+        m_display.Show();
+        ElapsedTime::Delay(1000);
+
         ESPhttpUpdate.update(client, FIRMWARE_LOCATION);
     }
 };
