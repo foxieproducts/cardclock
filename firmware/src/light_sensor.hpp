@@ -17,8 +17,8 @@ class LightSensor {
     enum {
         ADC_SAMPLES = 4,
         ADC_CLOCK_DIVIDER = 8,
-        MIN_SENSOR_VAL = 7,
-        MAX_SENSOR_VAL = 70,
+        MIN_SENSOR_VAL = 10,
+        MAX_SENSOR_VAL = 100,
         MAX_JITTER = 15,
 
         HISTORY_SIZE = 10,
