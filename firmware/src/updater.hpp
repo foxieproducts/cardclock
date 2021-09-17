@@ -6,6 +6,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266httpUpdate.h>
 #include <user_interface.h>
+#include <memory>
 
 #include "display.hpp"
 
@@ -14,9 +15,14 @@
 class Updater {
   private:
     Display& m_display;
+    std::shared_ptr<WiFiClientSecure> m_client;
 
   public:
-    Updater(Display& display) : m_display(display) {}
+    Updater(Display& display) : m_display(display) {
+        // allocate this on initialization since it is fairly large
+        m_client = std::make_shared<WiFiClientSecure>();
+        m_client->setInsecure();
+    }
 
     void Download() {
         if (!WiFi.isConnected()) {
@@ -49,13 +55,10 @@ class Updater {
         ESPhttpUpdate.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
         ESPhttpUpdate.rebootOnUpdate(true);
 
-        // if successful, this will reboot before returning
-        WiFiClientSecure* client = new WiFiClientSecure();
-        client->setInsecure();
-
         m_display.DrawTextCentered(F("WAIT"), GRAY);
         m_display.Show();
 
-        ESPhttpUpdate.update(*client, F(FIRMWARE_LOCATION));
+        // if successful, this will reboot before returning
+        ESPhttpUpdate.update(*m_client, F(FIRMWARE_LOCATION));
     }
 };
