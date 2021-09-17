@@ -3,7 +3,7 @@
 #include <map>                  // for std::map
 #include <vector>               // for std::vector
 #include "button.hpp"
-#include "characters.hpp"
+//#include "characters.hpp"
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"
 #include "settings.hpp"
@@ -192,12 +192,25 @@ class Display {
     }
 
     int DrawChar(const int x, char character, int color) {
-        if (CHARS.find(character) == CHARS.end()) {
-            character = '?';
-        }
+        std::vector<uint8_t> charData;
+        // clang-format off
 
-        const std::vector<uint8_t>& charData = CHARS.at(character);
+        #include "characters.hpp" // all display characters are implemented as code
+        
+        if (charData.empty()) {
+            charData = {
+                // show a ? for unknown characters
+                1, 1, 0,
+                0, 0, 1,
+                0, 1, 0,
+                0, 0, 0,
+                0, 1, 0,
+            };
+        }
+        // clang-format on
+
         const int charWidth = charData.size() / HEIGHT;
+
         const uint8_t* data = &charData[0];
 
         for (int row = 0; row < HEIGHT; ++row) {
@@ -209,8 +222,8 @@ class Display {
                 }
                 data++;
 
-                // TODO: Add a way for the calling function to change the color
-                // as it is drawn
+                // TODO: Add a way for the calling function to change the
+                // color as it is drawn
             }
         }
         return charWidth + 1;
