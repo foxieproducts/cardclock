@@ -33,8 +33,8 @@ void setup() {
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
     configMenu->AddTextSetting("HOUR", {"12", "24"});
-    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime();
-    }); configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
+    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime(); });
+    configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting("INFO", [&]() {
         String info;
         info += "IP: ";
