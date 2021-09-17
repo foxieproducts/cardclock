@@ -40,7 +40,8 @@ enum Display_e {
     SCROLLING_TEXT_MS = 50,
     SCROLL_DELAY_HORIZONTAL_MS = 10,
     SCROLL_DELAY_VERTICAL_MS = 35,
-
+    FRAMES_PER_SECOND = 30,
+    LIGHT_SENSOR_UPDATE_MS = 10,
     LEDS_PIN = 15,
 };
 
@@ -67,6 +68,8 @@ class Display {
     PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
     int m_currentBrightness{0};
+    ElapsedTime m_sinceLastShow;
+    ElapsedTime m_sinceLastLightSensorUpdate;
 
   public:
     Display(Settings& settings) : m_settings(settings) {
@@ -87,13 +90,21 @@ class Display {
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
 
     void Update() {
-        int minBrightness = m_settings[F("MINB")].as<int>();
-        int maxBrightness = m_settings[F("MAXB")].as<int>();
+        if (m_sinceLastLightSensorUpdate.Ms() > LIGHT_SENSOR_UPDATE_MS) {
+            m_sinceLastLightSensorUpdate.Reset();
+            m_currentBrightness = m_lightSensor.Get();
+        }
 
-        m_currentBrightness = m_lightSensor.Get();
-        SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
-                          minBrightness, maxBrightness));
-        Show();
+        if (m_sinceLastShow.Ms() > (1000 / FRAMES_PER_SECOND)) {
+            m_sinceLastShow.Reset();
+
+            int minBrightness = m_settings[F("MINB")].as<int>();
+            int maxBrightness = m_settings[F("MAXB")].as<int>();
+
+            SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
+                              minBrightness, maxBrightness));
+            Show();
+        }
     }
 
     void Show() {
@@ -163,7 +174,7 @@ class Display {
                           const int delayMs = SCROLL_DELAY_HORIZONTAL_MS) {
         for (int i = 0; i < num; ++i) {
             MoveHorizontal(direction);
-            Update();
+            Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
         }
         ElapsedTime::Delay(delayMs);
@@ -174,7 +185,7 @@ class Display {
                         const int delayMs = SCROLL_DELAY_VERTICAL_MS) {
         for (int i = 0; i < num; ++i) {
             MoveVertical(direction);
-            Update();
+            Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
         }
         ElapsedTime::Delay(delayMs);
