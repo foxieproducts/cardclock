@@ -110,13 +110,16 @@ class FoxieWiFi {
             m_display.Show();
         });
         ArduinoOTA.onEnd([&]() {
-            m_display.DrawTextScrolling("Do not unplug", GRAY);
+            m_display.Clear();
             m_display.DrawTextCentered("FLSH", ORANGE);
             m_display.Show();
         });
         ArduinoOTA.onProgress([&](unsigned int progress, unsigned int total) {
             m_display.DrawPixel(FIRST_HOUR_LED + map(progress, 0, total, 0, 11),
                                 PURPLE);
+            m_display.Clear();
+            m_display.DrawTextCentered(
+                String(map(progress, 0, total, 0, 100)) + "%", PURPLE);
             m_display.Show();
         });
         ArduinoOTA.onError([&](ota_error_t error) {
