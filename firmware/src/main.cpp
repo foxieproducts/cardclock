@@ -82,7 +82,6 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
     pinMode(PIN_BTN_DOWN, INPUT);
     pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
     pinMode(PIN_BTN_RIGHT, INPUT_PULLUP);
-    display.SetBrightness(30);
 
     // if left button is held on boot, go into safe mode. this still allows
     // ArduinoOTA to function and the firmware can be updated using espota

@@ -104,7 +104,6 @@ class FoxieWiFi {
             if (ArduinoOTA.getCommand() == U_FS) {
                 LittleFS.end();
             }
-            m_display.SetBrightness(30);
             m_display.Clear();
             m_display.DrawTextCentered("RECV", DARK_GREEN);
             m_display.ClearRoundLEDs();
