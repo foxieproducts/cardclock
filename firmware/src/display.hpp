@@ -96,7 +96,17 @@ class Display {
         Show();
     }
 
-    void Show() { m_leds.show(); }
+    void Show() {
+        system_soft_wdt_stop();
+        ets_intr_lock();
+        noInterrupts();
+
+        m_leds.show();
+
+        interrupts();
+        ets_intr_unlock();
+        system_soft_wdt_restart();
+    }
 
     void Clear(int color = BLACK, const bool includeRoundLEDs = false) {
         int num = WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
