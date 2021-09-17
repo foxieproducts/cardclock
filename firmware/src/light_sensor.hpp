@@ -21,7 +21,7 @@ class LightSensor {
         MAX_SENSOR_VAL = 70,
         MAX_JITTER = 10,
 
-        HISTORY_SIZE = 40,
+        HISTORY_SIZE = 10,
 
         RANGE = 100,
     };
