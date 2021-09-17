@@ -18,23 +18,25 @@
 void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
 void setup() {
-    Settings settings;
-    Display disp(settings);
-    FoxieWiFi wifi(disp, settings);
+    Settings* settings = new Settings();
+    Display* display = new Display(*settings);
+    FoxieWiFi* wifi = new FoxieWiFi(*display, *settings);
 
-    CheckButtonsOnBoot(settings, disp, wifi);
+    CheckButtonsOnBoot(*settings, *display, *wifi);
 
-    MenuManager menuMgr(disp, settings);
-    Rtc rtc;
-    FoxieNTP ntp(settings, rtc);
+    MenuManager* menuMgr = new MenuManager(*display, *settings);
+    Rtc* rtc = new Rtc();
+    FoxieNTP* ntp = new FoxieNTP(*settings, *rtc);
 
-    menuMgr.Add(std::make_shared<TimeMenu>(disp, rtc, settings));  // menu 0
-    menuMgr.Add(std::make_shared<Clock>(disp, rtc, settings));  // clock menu 1
+    menuMgr->Add(
+        std::make_shared<TimeMenu>(*display, *rtc, *settings));  // menu 0
+    menuMgr->Add(
+        std::make_shared<Clock>(*display, *rtc, *settings));  // clock menu 1
 
-    auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
+    auto configMenu = std::make_shared<ConfigMenu>(*display, *settings);
     configMenu->AddTextSetting(F("HOUR"), {"12", "24"});
     configMenu->AddRangeSetting(F("UTC"), -12, 12,
-                                [&]() { ntp.UpdateRTCTime(); });
+                                [&]() { ntp->UpdateRTCTime(); });
     configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting(F("INFO"), [&]() {
         String info;
@@ -44,12 +46,12 @@ void setup() {
         info += F(" FHEAP: ") + String(ESP.getFreeHeap());
         info += F(" FCONTSTACK: ") + String(ESP.getFreeContStack());
 
-        disp.DrawTextScrolling(info, GREEN);
+        display->DrawTextScrolling(info, GREEN);
     });
     configMenu->AddRunFuncSetting(F("VER"), [&]() {
-        disp.DrawTextScrolling(F("FC/OS v") + String(FIRMWARE_VER) +
-                                   F(" and may the schwarz be with you!"),
-                               PURPLE);
+        display->DrawTextScrolling(F("FC/OS v") + String(FIRMWARE_VER) +
+                                       F(" and may the schwarz be with you!"),
+                                   PURPLE);
     });
 
     configMenu->AddRangeSetting(F("MINB"), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
@@ -58,21 +60,21 @@ void setup() {
 
     configMenu->AddTextSetting(F("DEVL"), {F("OFF"), F("ON")});
     configMenu->AddRunFuncSetting(F("UPDT"), [&]() {
-        Updater updater(disp);
+        Updater updater(*display);
         updater.Download();
     });
 
-    menuMgr.Add(configMenu);  // menu 2
+    menuMgr->Add(configMenu);  // menu 2
 
-    menuMgr.ActivateMenu(1);  // primary clock screen, implemented as a menu
+    menuMgr->ActivateMenu(1);  // primary clock screen, implemented as a menu
 
     // use a while loop instead of loop() ... I just hate globals, OK?
     while (true) {
-        rtc.Update();
-        ntp.Update();
-        menuMgr.Update();
-        wifi.Update();
-        disp.Update();
+        rtc->Update();
+        ntp->Update();
+        menuMgr->Update();
+        wifi->Update();
+        display->Update();
 
         yield();  // necessary on ESP platform to allow WiFi-related code to
                   // run

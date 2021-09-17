@@ -50,12 +50,12 @@ class Updater {
         ESPhttpUpdate.rebootOnUpdate(true);
 
         // if successful, this will reboot before returning
-        WiFiClientSecure client;
-        client.setInsecure();
+        WiFiClientSecure* client = new WiFiClientSecure();
+        client->setInsecure();
 
         m_display.DrawTextCentered(F("WAIT"), GRAY);
         m_display.Show();
 
-        ESPhttpUpdate.update(client, F(FIRMWARE_LOCATION));
+        ESPhttpUpdate.update(*client, F(FIRMWARE_LOCATION));
     }
 };
