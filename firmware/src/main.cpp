@@ -33,12 +33,16 @@ void setup() {
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
     configMenu->AddTextSetting("HOUR", {"12", "24"});
-    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime(); });
-    configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
-    configMenu->AddRunFuncSetting("ADDR", [&]() {
-        String ip =
+    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime();
+    }); configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
+    configMenu->AddRunFuncSetting("INFO", [&]() {
+        String info;
+        info += "IP: ";
+        info +=
             WiFi.isConnected() ? WiFi.localIP().toString() : "NOT CONNECTED";
-        disp.DrawTextScrolling(ip, GREEN);
+        info += " MEM FREE: " + String(ESP.getFreeHeap());
+
+        disp.DrawTextScrolling(info, GREEN);
     });
     configMenu->AddRunFuncSetting("VER", [&]() {
         disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
@@ -52,7 +56,6 @@ void setup() {
 
     configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
     configMenu->AddRunFuncSetting("UPDT", [&]() {
-       
         Updater updater(disp);
         updater.Download();
     });
