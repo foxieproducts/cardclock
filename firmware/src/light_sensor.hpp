@@ -19,7 +19,7 @@ class LightSensor {
         ADC_CLOCK_DIVIDER = 8,
         MIN_SENSOR_VAL = 7,
         MAX_SENSOR_VAL = 70,
-        MAX_JITTER = 10,
+        MAX_JITTER = 15,
 
         HISTORY_SIZE = 10,
 

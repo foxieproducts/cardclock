@@ -42,11 +42,12 @@ void setup() {
     configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting(F("INFO"), [&]() {
         String info;
-        info += F("IP: ");
+        info += F("IP:");
         info +=
             WiFi.isConnected() ? WiFi.localIP().toString() : F("NOT CONNECTED");
-        info += F(" FHEAP: ") + String(ESP.getFreeHeap());
-        info += F(" FCONTSTACK: ") + String(ESP.getFreeContStack());
+        info += F(" FH:") + String(ESP.getFreeHeap());
+        info += F(" FCS:") + String(ESP.getFreeContStack());
+        info += F(" UPT:") + String(millis() / 1000 / 60);
 
         display->DrawTextScrolling(info, GREEN);
     });
