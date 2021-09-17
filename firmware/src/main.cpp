@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
 #include <user_interface.h>
+#include <memory>
 
 #define FIRMWARE_VER 1
 
@@ -18,15 +19,16 @@
 void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
 void setup() {
-    Settings* settings = new Settings();
-    Display* display = new Display(*settings);
-    FoxieWiFi* wifi = new FoxieWiFi(*display, *settings);
+    auto settings = std::make_shared<Settings>();
+    auto display = std::make_shared<Display>(*settings);
+    auto wifi = std::make_shared<FoxieWiFi>(*display, *settings);
+    auto updater = std::make_shared<Updater>(*display);
 
     CheckButtonsOnBoot(*settings, *display, *wifi);
 
-    MenuManager* menuMgr = new MenuManager(*display, *settings);
-    Rtc* rtc = new Rtc();
-    FoxieNTP* ntp = new FoxieNTP(*settings, *rtc);
+    auto menuMgr = std::make_shared<MenuManager>(*display, *settings);
+    auto rtc = std::make_shared<Rtc>();
+    auto ntp = std::make_shared<FoxieNTP>(*settings, *rtc);
 
     menuMgr->Add(
         std::make_shared<TimeMenu>(*display, *rtc, *settings));  // menu 0
@@ -59,10 +61,7 @@ void setup() {
     configMenu->AddTextSetting(F("WLED"), {F("OFF"), F("ON")});
 
     configMenu->AddTextSetting(F("DEVL"), {F("OFF"), F("ON")});
-    configMenu->AddRunFuncSetting(F("UPDT"), [&]() {
-        Updater updater(*display);
-        updater.Download();
-    });
+    configMenu->AddRunFuncSetting(F("UPDT"), [&]() { updater->Download(); });
 
     menuMgr->Add(configMenu);  // menu 2
 
