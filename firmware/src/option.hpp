@@ -35,8 +35,7 @@ class TextListOption : public Option {
     Display& m_display;
     Settings& m_settings;
     std::vector<String> m_values;
-    size_t m_index{0};
-    bool m_useAnimation{true};
+    int m_index{0};
 
   public:
     TextListOption(Display& display,
@@ -79,18 +78,16 @@ class TextListOption : public Option {
             return;
         }
         m_display.DrawText(0, m_values[m_index], GRAY);
-        DrawArrows();
+        DrawArrows(0, m_values.size());
     }
 
     virtual void Up() override {
         if (!m_values.size()) {
             return;
         }
-        if (m_index < m_values.size() - 1) {
+        if ((size_t)m_index < m_values.size() - 1) {
             m_index++;
-            if (m_useAnimation) {
-                m_display.ScrollVertical(HEIGHT, 1);
-            }
+            m_display.ScrollVertical(HEIGHT, 1);
         }
     }
     virtual void Down() override {
@@ -99,9 +96,7 @@ class TextListOption : public Option {
         }
         if (m_index > 0) {
             m_index--;
-            if (m_useAnimation) {
-                m_display.ScrollVertical(HEIGHT, -1);
-            }
+            m_display.ScrollVertical(HEIGHT, -1);
         }
     }
 
@@ -112,10 +107,10 @@ class TextListOption : public Option {
         }
     }
 
-  private:
-    virtual void DrawArrows() {
-        const int downColor = m_index > 0 ? GREEN : DARK_GREEN;
-        const int upColor = m_index < m_values.size() - 1 ? GREEN : DARK_GREEN;
+  protected:
+    virtual void DrawArrows(int min, int max) {
+        const int downColor = m_index > min ? GREEN : DARK_GREEN;
+        const int upColor = m_index < max - 1 ? GREEN : DARK_GREEN;
 
         m_display.DrawPixel(15, upColor);
         m_display.DrawPixel(31, upColor);
@@ -130,6 +125,10 @@ class TextListOption : public Option {
 };
 
 class RangeOption : public TextListOption {
+  protected:
+    int m_min{0};
+    int m_max{0};
+
   public:
     RangeOption(Display& display,
                 Settings& settings,
@@ -137,11 +136,38 @@ class RangeOption : public TextListOption {
                 const int min,
                 const int max,
                 std::function<void()> finishFunc)
-        : TextListOption(display, settings, name, {}, finishFunc) {
-        m_useAnimation = false;
-        for (int i = min; i <= max; ++i) {
-            m_values.push_back(String(i));
+        : TextListOption(display, settings, name, {}, finishFunc),
+          m_min(min),
+          m_max(max) {}
+    virtual String GetCurrentValue() override { return String(m_index); }
+
+    virtual void Begin() override {
+        if (m_index != m_settings[m_name].as<int>()) {
+            // when we come back into the menu, make sure that the setting
+            // selected is what is actually set in m_settings
+            m_index = m_settings[m_name].as<int>();
         }
+    }
+
+    virtual void Update() override {
+        m_display.DrawText(0, String(m_index), GRAY);
+        DrawArrows(m_min, m_max);
+    }
+
+    virtual void Up() override {
+        if (m_index < m_max) {
+            m_index++;
+        }
+    }
+    virtual void Down() override {
+        if (m_index > m_min) {
+            m_index--;
+        }
+    }
+
+    virtual void End() override {
+        m_settings[GetName()] = GetCurrentValue();
+        m_settings.Save();
     }
 };
 
