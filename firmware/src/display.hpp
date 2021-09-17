@@ -3,7 +3,6 @@
 #include <map>                  // for std::map
 #include <vector>               // for std::vector
 #include "button.hpp"
-//#include "characters.hpp"
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"
 #include "settings.hpp"
@@ -77,19 +76,19 @@ class Display {
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWrite(LED_BUILTIN, HIGH);
 
-        if (!settings.containsKey("MINB")) {
-            settings["MINB"] = String(MIN_BRIGHTNESS_DEFAULT);
+        if (!settings.containsKey(F("MINB"))) {
+            settings[F("MINB")] = String(MIN_BRIGHTNESS_DEFAULT);
         }
-        if (!settings.containsKey("MAXB")) {
-            settings["MAXB"] = String(MAX_BRIGHTNESS_DEFAULT);
+        if (!settings.containsKey(F("MAXB"))) {
+            settings[F("MAXB")] = String(MAX_BRIGHTNESS_DEFAULT);
         }
     }
 
     Adafruit_NeoPixel& GetLEDs() { return m_leds; };
 
     void Update() {
-        int minBrightness = m_settings["MINB"].as<int>();
-        int maxBrightness = m_settings["MAXB"].as<int>();
+        int minBrightness = m_settings[F("MINB")].as<int>();
+        int maxBrightness = m_settings[F("MAXB")].as<int>();
 
         m_currentBrightness = m_lightSensor.Get();
         SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,

@@ -32,30 +32,32 @@ void setup() {
     menuMgr.Add(std::make_shared<Clock>(disp, rtc, settings));  // clock menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(disp, settings);
-    configMenu->AddTextSetting("HOUR", {"12", "24"});
-    configMenu->AddRangeSetting("UTC", -12, 12, [&]() { ntp.UpdateRTCTime(); });
-    configMenu->AddTextSetting("WIFI", {"OFF", "ON", "CFG"});
-    configMenu->AddRunFuncSetting("INFO", [&]() {
+    configMenu->AddTextSetting(F("HOUR"), {"12", "24"});
+    configMenu->AddRangeSetting(F("UTC"), -12, 12,
+                                [&]() { ntp.UpdateRTCTime(); });
+    configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
+    configMenu->AddRunFuncSetting(F("INFO"), [&]() {
         String info;
-        info += "IP: ";
+        info += F("IP: ");
         info +=
-            WiFi.isConnected() ? WiFi.localIP().toString() : "NOT CONNECTED";
-        info += " MEM FREE: " + String(ESP.getFreeHeap());
+            WiFi.isConnected() ? WiFi.localIP().toString() : F("NOT CONNECTED");
+        info += F(" FHEAP: ") + String(ESP.getFreeHeap());
+        info += F(" FCONTSTACK: ") + String(ESP.getFreeContStack());
 
         disp.DrawTextScrolling(info, GREEN);
     });
-    configMenu->AddRunFuncSetting("VER", [&]() {
-        disp.DrawTextScrolling("FC/OS v" + String(FIRMWARE_VER) +
-                                   " and may the schwarz be with you!",
+    configMenu->AddRunFuncSetting(F("VER"), [&]() {
+        disp.DrawTextScrolling(F("FC/OS v") + String(FIRMWARE_VER) +
+                                   F(" and may the schwarz be with you!"),
                                PURPLE);
     });
 
-    configMenu->AddRangeSetting("MINB", MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-    configMenu->AddRangeSetting("MAXB", MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-    configMenu->AddTextSetting("WLED", {"OFF", "ON"});
+    configMenu->AddRangeSetting(F("MINB"), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    configMenu->AddRangeSetting(F("MAXB"), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    configMenu->AddTextSetting(F("WLED"), {F("OFF"), F("ON")});
 
-    configMenu->AddTextSetting("DEVL", {"OFF", "ON"});
-    configMenu->AddRunFuncSetting("UPDT", [&]() {
+    configMenu->AddTextSetting(F("DEVL"), {F("OFF"), F("ON")});
+    configMenu->AddRunFuncSetting(F("UPDT"), [&]() {
         Updater updater(disp);
         updater.Download();
     });
@@ -87,8 +89,8 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
     // ArduinoOTA to function and the firmware can be updated using espota
     // just in case you accidentally brick the runtime
     if (digitalRead(PIN_BTN_LEFT) == LOW) {
-        display.DrawTextCentered("SAFE", ORANGE);
-        settings["DEVL"] == "ON";
+        display.DrawTextCentered(F("SAFE"), ORANGE);
+        settings[F("DEVL")] == F("ON");
         while (true) {
             wifi.Update();
             display.Update();
@@ -100,7 +102,7 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
 
     // if up button is held on boot, clear settings.
     if (digitalRead(PIN_BTN_UP) == LOW) {
-        display.DrawTextScrolling("SETTINGS CLEARED", PURPLE);
+        display.DrawTextScrolling(F("SETTINGS CLEARED"), PURPLE);
         settings.clear();
         settings.Save();
         ESP.eraseConfig();

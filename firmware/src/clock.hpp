@@ -11,8 +11,8 @@ class Clock : public Menu {
   public:
     Clock(Display& display, Rtc& rtc, Settings& settings)
         : Menu(display, settings), m_rtc(rtc) {
-        if (!settings.containsKey("WLED")) {
-            settings["WLED"] = "ON";
+        if (!settings.containsKey(F("WLED"))) {
+            settings[F("WLED")] = F("ON");
         }
     }
 
@@ -22,7 +22,7 @@ class Clock : public Menu {
         DrawSeparator(color);
         DrawAnalog(color);
 
-        if (WiFi.isConnected() && m_settings["WLED"] == "ON") {
+        if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
             m_display.DrawPixel(42, DARK_GRAY);
         }
     }
@@ -50,8 +50,9 @@ class Clock : public Menu {
         m_display.Clear();
 
         char text[10];
-        sprintf(text, "%2d",
-                m_settings["HOUR"] == "24" ? m_rtc.Hour() : m_rtc.Hour12());
+        sprintf(
+            text, "%2d",
+            m_settings[F("HOUR")] == F("24") ? m_rtc.Hour() : m_rtc.Hour12());
         m_display.DrawText(0, text, color);
         sprintf(text, "%02d", m_rtc.Minute());
         m_display.DrawText(10, text, color);

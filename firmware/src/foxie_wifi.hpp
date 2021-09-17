@@ -20,7 +20,7 @@ class FoxieWiFi {
   public:
     FoxieWiFi(Display& display, Settings& settings)
         : m_display(display), m_settings(settings) {
-        String value = m_settings["WIFI"] | "OFF";
+        String value = m_settings[F("WIFI")] | "OFF";
         if (value = "OFF") {
             WiFi.forceSleepBegin();
         }
@@ -29,23 +29,23 @@ class FoxieWiFi {
     void Update() {
         if (!m_isInitialized) {
             Initialize();
-        } else if (m_settings["WIFI"] == "CFG" ||
-                   (m_settings["WIFI"] == "ON" &&
-                    m_settings["wifi_configured"] != "1")) {
+        } else if (m_settings[F("WIFI")] == "CFG" ||
+                   (m_settings[F("WIFI")] == "ON" &&
+                    m_settings[F("wifi_configured")] != F("1"))) {
             Configure();
-        } else if (m_settings["WIFI"] == "OFF" && m_isInitialized) {
+        } else if (m_settings[F("WIFI")] == F("OFF") && m_isInitialized) {
             WiFi.forceSleepBegin();
             m_isInitialized = false;
             m_isOTAInitialized = false;
         }
 
         if (m_isInitialized && WiFi.isConnected() && !m_isOTAInitialized &&
-            m_settings["DEVL"] == "ON") {
+            m_settings[F("DEVL")] == F("ON")) {
             MDNS.begin(GetUniqueMDNSName().c_str());
             InitializeOTA();
         }
 
-        if (m_isOTAInitialized && m_settings["DEVL"] == "ON") {
+        if (m_isOTAInitialized && m_settings[F("DEVL")] == F("ON")) {
             ArduinoOTA.handle();
             MDNS.update();
             // server.handleClient();
@@ -59,8 +59,9 @@ class FoxieWiFi {
         // TODO: Make sure config portal isn't open when calling this
         Initialize();
 
-        m_settings["WIFI"] = "OFF";
-        m_settings["wifi_configured"].clear();
+        m_settings[F("WIFI")] = F("OFF");
+        m_settings.remove("wifi_configured");
+
         m_settings.Save(true);
 
         AsyncWebServer server{80};
@@ -71,19 +72,19 @@ class FoxieWiFi {
         WiFi.persistent(true);
 
         wifiManager.setConfigPortalTimeout(180);
-        m_display.DrawTextScrolling("Connect to Foxie_WiFiSetup", GRAY);
+        m_display.DrawTextScrolling(F("Connect to Foxie_WiFiSetup"), GRAY);
         m_display.Clear();
-        m_display.DrawText(1, "<(I)>", BLUE);
+        m_display.DrawText(1, F("<(I)>"), BLUE);
         m_display.Show();
 
-        if (wifiManager.autoConnect("Foxie_WiFiSetup")) {
-            m_display.DrawTextScrolling("SUCCESS", GREEN);
-            m_settings["WIFI"] = "ON";
-            m_settings["wifi_configured"] = "1";
+        if (wifiManager.autoConnect(String(F("Foxie_WiFiSetup")).c_str())) {
+            m_display.DrawTextScrolling(F("SUCCESS"), GREEN);
+            m_settings[F("WIFI")] = F("ON");
+            m_settings[F("wifi_configured")] = F("1");
         } else {
-            m_display.DrawTextScrolling("FAILED", RED);
-            m_settings["WIFI"] = "OFF";
-            m_settings["wifi_configured"].clear();
+            m_display.DrawTextScrolling(F("FAILED"), RED);
+            m_settings[F("WIFI")] = F("OFF");
+            m_settings.remove("wifi_configured");
             WiFi.disconnect();
             m_isInitialized = false;
         }
@@ -91,7 +92,7 @@ class FoxieWiFi {
     }
 
     void Initialize() {
-        if (!m_isInitialized && m_settings["WIFI"] != "OFF") {
+        if (!m_isInitialized && m_settings[F("WIFI")] != F("OFF")) {
             WiFi.begin();
             WiFi.persistent(true);
             m_isInitialized = true;
@@ -105,13 +106,13 @@ class FoxieWiFi {
                 LittleFS.end();
             }
             m_display.Clear();
-            m_display.DrawTextCentered("RECV", DARK_GREEN);
+            m_display.DrawTextCentered(F("RECV"), DARK_GREEN);
             m_display.ClearRoundLEDs();
             m_display.Show();
         });
         ArduinoOTA.onEnd([&]() {
             m_display.Clear();
-            m_display.DrawTextCentered("FLSH", ORANGE);
+            m_display.DrawTextCentered(F("FLSH"), ORANGE);
             m_display.Show();
         });
         ArduinoOTA.onProgress([&](unsigned int progress, unsigned int total) {
@@ -119,11 +120,11 @@ class FoxieWiFi {
                                 PURPLE);
             m_display.Clear();
             m_display.DrawTextCentered(
-                String(map(progress, 0, total, 0, 100)) + "%", PURPLE);
+                String(map(progress, 0, total, 0, 100)) + F("%"), PURPLE);
             m_display.Show();
         });
         ArduinoOTA.onError([&](ota_error_t error) {
-            m_display.DrawTextScrolling("OTA ERR:" + String(error), RED);
+            m_display.DrawTextScrolling(F("OTA ERR:") + String(error), RED);
             ESP.restart();
         });
 
@@ -133,7 +134,7 @@ class FoxieWiFi {
     }
 
     String GetUniqueMDNSName() {
-        return "FoxieClock_" + String(WiFi.localIP()[3], DEC);
+        return F("FoxieClock_") + String(WiFi.localIP()[3], DEC);
     }
 
     void SetupWebServer() {

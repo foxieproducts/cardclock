@@ -20,7 +20,7 @@ class Updater {
 
     void Download() {
         if (!WiFi.isConnected()) {
-            m_display.DrawTextScrolling("Not connected to WiFi", ORANGE);
+            m_display.DrawTextScrolling(F("Not connected to WiFi"), ORANGE);
             return;
         }
 
@@ -30,7 +30,7 @@ class Updater {
         });
         ESPhttpUpdate.onEnd([&]() {
             m_display.Clear();
-            m_display.DrawTextCentered("FLSH", ORANGE);
+            m_display.DrawTextCentered(F("FLSH"), ORANGE);
             m_display.Show();
         });
         ESPhttpUpdate.onProgress(
@@ -39,7 +39,7 @@ class Updater {
                     FIRST_HOUR_LED + map(progress, 0, total, 0, 11), PURPLE);
                 m_display.Clear();
                 m_display.DrawTextCentered(
-                    String(map(progress, 0, total, 0, 100)) + "%", PURPLE);
+                    String(map(progress, 0, total, 0, 100)) + F("%"), PURPLE);
                 m_display.Show();
             });
         ESPhttpUpdate.onError([&](int error) {
@@ -53,12 +53,9 @@ class Updater {
         WiFiClientSecure client;
         client.setInsecure();
 
-        // waiting a little bit seems to be helpful before starting the update.
-        // otherwise, calling ESPhttpUpdate.update() seems to randomly crash.
-        m_display.DrawTextCentered("WAIT", GRAY);
+        m_display.DrawTextCentered(F("WAIT"), GRAY);
         m_display.Show();
-        ElapsedTime::Delay(1000);
 
-        ESPhttpUpdate.update(client, FIRMWARE_LOCATION);
+        ESPhttpUpdate.update(client, F(FIRMWARE_LOCATION));
     }
 };
