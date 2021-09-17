@@ -28,7 +28,7 @@ class FoxieNTP {
                 m_ntpClient.setTimeOffset(m_settings["UTC"].as<int>() * 60 *
                                           60);
                 m_isInitialized = true;
-                m_ntpClient.update();
+                m_ntpClient.forceUpdate();
                 UpdateRTCTime();
             } else {
                 m_ntpClient.update();
