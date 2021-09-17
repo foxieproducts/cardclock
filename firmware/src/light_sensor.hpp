@@ -17,11 +17,11 @@ class LightSensor {
     enum {
         ADC_SAMPLES = 4,
         ADC_CLOCK_DIVIDER = 8,
-        MIN_SENSOR_VAL = 10,
+        MIN_SENSOR_VAL = 7,
         MAX_SENSOR_VAL = 70,
-        MAX_JITTER = 15,
+        MAX_JITTER = 10,
 
-        HISTORY_SIZE = 80,
+        HISTORY_SIZE = 40,
 
         RANGE = 100,
     };
@@ -33,18 +33,17 @@ class LightSensor {
 
   public:
     LightSensor() {
-        // populate history with current value
         for (int i = 0; i < HISTORY_SIZE; ++i) {
             m_history[i] = GetCurrentADCValue();
         }
     }
 
     uint16_t Get() {
-        int32_t average = GetCurrentADCValue();
+        uint32_t average = GetCurrentADCValue();
 
         // average more, maybe not a great solution, not amazing at math
         if ((uint16_t)average > m_history[m_pos] + MAX_JITTER ||
-            (uint16_t)average < m_history[m_pos] - MAX_JITTER || average == 0) {
+            (uint16_t)average < m_history[m_pos] - MAX_JITTER) {
             m_history[m_pos] = average;
         }
         if (m_pos++ == HISTORY_SIZE) {
@@ -64,14 +63,14 @@ class LightSensor {
     // get a smoothed, bounded value from the sensor
     uint16_t GetCurrentADCValue() {
         ReadADC();
-        int32_t average = 0;
+        uint32_t average = 0;
         for (int i = 0; i < ADC_SAMPLES; i++) {
             average += m_samples[i];
         }
         average /= ADC_SAMPLES;
         average = map(average, MIN_SENSOR_VAL, MAX_SENSOR_VAL, 0, RANGE);
         average = constrain(average, 0, RANGE);
-        return average;
+        return (uint16_t)average;
     }
 
     // immediately read ADC samples into all ADC_SAMPLES slots
