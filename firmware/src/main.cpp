@@ -4,8 +4,6 @@
 #include <user_interface.h>
 #include <memory>
 
-#define FIRMWARE_VER 1
-
 #include "clock.hpp"
 #include "config_menu.hpp"
 #include "display.hpp"
@@ -14,15 +12,15 @@
 #include "option.hpp"
 #include "settings.hpp"
 #include "time_menu.hpp"
-#include "updater.hpp"
+#include "web_update.hpp"
 
 void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
 void setup() {
     auto settings = std::make_shared<Settings>();
     auto display = std::make_shared<Display>(*settings);
-    auto wifi = std::make_shared<FoxieWiFi>(*display, *settings);
-    auto updater = std::make_shared<Updater>(*display);
+    auto wifi = std::make_shared<FoxieWiFi>(*settings, *display);
+    auto updater = std::make_shared<WebUpdate>(*settings, *display);
 
     CheckButtonsOnBoot(*settings, *display, *wifi);
 
@@ -52,7 +50,7 @@ void setup() {
         display->DrawTextScrolling(info, GREEN);
     });
     configMenu->AddRunFuncSetting(F("VER"), [&]() {
-        display->DrawTextScrolling(F("FC/OS v") + String(FIRMWARE_VER) +
+        display->DrawTextScrolling(F("FC/OS v") + String(FW_VERSION) +
                                        F(" and may the schwarz be with you!"),
                                    PURPLE);
     });

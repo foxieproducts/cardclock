@@ -7,14 +7,15 @@
 #include <ESPAsyncWiFiManager.h>
 #include <memory>
 
+#include "button.hpp"
 #include "display.hpp"
 #include "elapsed_time.hpp"
 #include "settings.hpp"
 
 class FoxieWiFi {
   private:
-    Display& m_display;
     Settings& m_settings;
+    Display& m_display;
 
     std::shared_ptr<AsyncWebServer> m_server;
     std::shared_ptr<DNSServer> m_dns;
@@ -24,8 +25,8 @@ class FoxieWiFi {
     bool m_isOTAInitialized{false};
 
   public:
-    FoxieWiFi(Display& display, Settings& settings)
-        : m_display(display), m_settings(settings) {
+    FoxieWiFi(Settings& settings, Display& display)
+        : m_settings(settings), m_display(display) {
         m_server = std::make_shared<AsyncWebServer>(80);
         m_dns = std::make_shared<DNSServer>();
         m_wifiManager =
@@ -129,12 +130,17 @@ class FoxieWiFi {
                                 PURPLE);
             m_display.Clear();
             m_display.DrawTextCentered(
-                String(map(progress, 0, total, 0, 100)) + F("%"), PURPLE);
+                String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);
             m_display.Show();
+            if (Button::AreAnyButtonsPressed() == PIN_BTN_LEFT) {
+                while (Button::AreAnyButtonsPressed()) {
+                    yield();
+                }
+                ESP.restart();
+            }
         });
         ArduinoOTA.onError([&](ota_error_t error) {
             m_display.DrawTextScrolling(F("OTA ERR:") + String(error), RED);
-            ESP.restart();
         });
 
         ArduinoOTA.setHostname(GetUniqueMDNSName().c_str());

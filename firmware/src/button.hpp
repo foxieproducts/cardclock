@@ -72,11 +72,35 @@ class Button {
         m_wasPressed = false;
     }
 
-    static bool AreAnyButtonsPressed() {
-        return digitalRead(PIN_BTN_UP) == LOW ||
-               digitalRead(PIN_BTN_DOWN) == LOW ||
-               digitalRead(PIN_BTN_LEFT) == LOW ||
-               digitalRead(PIN_BTN_RIGHT) == LOW;
+    static int AreAnyButtonsPressed() {
+        if (digitalRead(PIN_BTN_UP) == LOW) {
+            return PIN_BTN_UP;
+        }
+        if (digitalRead(PIN_BTN_DOWN) == LOW) {
+            return PIN_BTN_DOWN;
+        }
+        if (digitalRead(PIN_BTN_LEFT) == LOW) {
+            return PIN_BTN_LEFT;
+        }
+        if (digitalRead(PIN_BTN_RIGHT) == LOW) {
+            return PIN_BTN_RIGHT;
+        }
+        return 0;
+    }
+
+    static int WaitForButtonPress(const int maxWaitMs = 0) {
+        ElapsedTime wait;
+        while (true) {
+            int button = AreAnyButtonsPressed();
+            if (button != 0) {
+                return button;
+            }
+
+            if (maxWaitMs && wait.Ms() > maxWaitMs) {
+                return ERR_TIMEOUT;
+            }
+            yield();
+        }
     }
 
   private:
