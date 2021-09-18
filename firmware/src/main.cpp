@@ -36,7 +36,7 @@ void setup() {
         std::make_shared<Clock>(*display, *rtc, *settings));  // clock menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(*display, *settings);
-    configMenu->AddTextSetting(F("HOUR"), {"12", "24"});
+    configMenu->AddTextSetting(F("24HR"), {"OFF", "ON"});
     configMenu->AddRangeSetting(F("UTC"), -12, 12,
                                 [&]() { ntp->UpdateRTCTime(); });
     configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
