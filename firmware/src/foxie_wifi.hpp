@@ -5,6 +5,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESPAsyncWiFiManager.h>
+#include <memory>
 
 #include "display.hpp"
 #include "elapsed_time.hpp"
@@ -14,14 +15,23 @@ class FoxieWiFi {
   private:
     Display& m_display;
     Settings& m_settings;
+
+    std::shared_ptr<AsyncWebServer> m_server;
+    std::shared_ptr<DNSServer> m_dns;
+    std::shared_ptr<AsyncWiFiManager> m_wifiManager;
+
     bool m_isInitialized{false};
     bool m_isOTAInitialized{false};
 
   public:
     FoxieWiFi(Display& display, Settings& settings)
         : m_display(display), m_settings(settings) {
+        m_server = std::make_shared<AsyncWebServer>(80);
+        m_dns = std::make_shared<DNSServer>();
+        m_wifiManager =
+            std::make_shared<AsyncWiFiManager>(m_server.get(), m_dns.get());
         String value = m_settings[F("WIFI")] | "OFF";
-        if (value = "OFF") {
+        if (value == "OFF") {
             WiFi.forceSleepBegin();
         }
     }
@@ -37,6 +47,9 @@ class FoxieWiFi {
             WiFi.forceSleepBegin();
             m_isInitialized = false;
             m_isOTAInitialized = false;
+        } else if (WiFi.isConnected() && m_settings[F("WIFI")] == F("OFF")) {
+            WiFi.disconnect();
+            m_settings.remove("wifi_configured");
         }
 
         if (m_isInitialized && WiFi.isConnected() && !m_isOTAInitialized &&
@@ -64,20 +77,16 @@ class FoxieWiFi {
 
         m_settings.Save(true);
 
-        AsyncWebServer server{80};
-        DNSServer dns;
-        AsyncWiFiManager wifiManager{&server, &dns};
-
-        wifiManager.resetSettings();
+        m_wifiManager->resetSettings();
         WiFi.persistent(true);
 
-        wifiManager.setConfigPortalTimeout(180);
+        m_wifiManager->setConfigPortalTimeout(120);
         m_display.DrawTextScrolling(F("Connect to Foxie_WiFiSetup"), GRAY);
         m_display.Clear();
         m_display.DrawText(1, F("<(I)>"), BLUE);
         m_display.Show();
 
-        if (wifiManager.autoConnect(String(F("Foxie_WiFiSetup")).c_str())) {
+        if (m_wifiManager->autoConnect(String(F("Foxie_WiFiSetup")).c_str())) {
             m_display.DrawTextScrolling(F("SUCCESS"), GREEN);
             m_settings[F("WIFI")] = F("ON");
             m_settings[F("wifi_configured")] = F("1");
