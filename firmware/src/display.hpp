@@ -275,6 +275,9 @@ class Display {
         m_leds.restorePixels();
         m_leds.setBrightness(brightness);
     }
+    bool IsAtMinimumBrightness() {
+        return GetBrightness() == LightSensor::MIN_SENSOR_VAL;
+    }
 
     static int ScaleBrightness(const int color, const float brightness) {
         const float r = ((color & 0xFF0000) >> 16) * brightness;

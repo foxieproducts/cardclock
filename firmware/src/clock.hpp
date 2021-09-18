@@ -1,5 +1,4 @@
 #pragma once
-#include "foxie_wifi.hpp"
 #include "menu.hpp"
 #include "rtc.hpp"
 
@@ -44,7 +43,7 @@ class Clock : public Menu {
 
   private:
     void DrawClockDigits(int color) {
-        if (IsMinimumBrightness()) {
+        if (m_display.IsAtMinimumBrightness()) {
             color = Display::ScaleBrightness(color, 0.6f);
         }
 
@@ -60,7 +59,7 @@ class Clock : public Menu {
     }
 
     void DrawSeparator(int color) {
-        if (IsMinimumBrightness()) {
+        if (m_display.IsAtMinimumBrightness()) {
             color = Display::ScaleBrightness(color, 0.6f);
         }
 
@@ -72,17 +71,15 @@ class Clock : public Menu {
     }
 
     void DrawAnalog(int color) {
-        if (IsMinimumBrightness()) {
+        if (m_display.IsAtMinimumBrightness()) {
             color = Display::ScaleBrightness(color, 0.7f);
         }
 
-        int darkerColor = Display::ScaleBrightness(color, 0.3f);
+        int darkerColor = Display::ScaleBrightness(color, 0.2f);
         m_display.ClearRoundLEDs(DARK_GRAY);
 
         m_display.DrawSecondLEDs(m_rtc.Second(), darkerColor);
         m_display.DrawHourLED(m_rtc.Hour12(), color);
         m_display.DrawMinuteLED(m_rtc.Minute(), color);
     }
-
-    bool IsMinimumBrightness() { return m_display.GetBrightness() == 0; }
 };
