@@ -92,7 +92,8 @@ class WebUpdate {
         m_display.Show();
 
         // if successful, this will reboot before returning
-        ESPhttpUpdate.update(*m_client, F(FW_DOWNLOAD_ADDRESS));
+        ESPhttpUpdate.update(*m_client,
+                             "https://" + String(F(FW_DOWNLOAD_ADDRESS)));
     }
 
   private:
@@ -104,7 +105,7 @@ class WebUpdate {
         m_display.DrawTextCentered(F(">>"), BLUE);
         m_display.Show();
 
-        if (https.begin(*m_client, F(FW_VERSION_ADDR))) {
+        if (https.begin(*m_client, "https://" + String(F(FW_VERSION_ADDR)))) {
             int httpCode = https.GET();
 
             // httpCode will be negative on error
