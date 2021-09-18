@@ -25,7 +25,7 @@ class Rtc {
 
         // ideally, we get interrupted every 1 second. However, sometimes the
         // PCF8563 seems to get confused and send interrupts once a minute
-        if (m_receivedInterrupt || Millis() > 1000) {
+        if (m_receivedInterrupt || Millis() >= 1000) {
             m_rtc.getDateTime();
             m_receivedInterrupt = false;
             m_millisAtInterrupt = millis();
