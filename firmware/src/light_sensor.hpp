@@ -2,7 +2,7 @@
 #include <Arduino.h>         // for map()
 #include <stdint.h>          // for uint16_t and others
 #include <user_interface.h>  // for ESP-specific API calls
-#include "elapsed_time.hpp"
+#include <elapsed_time.hpp>
 
 /**
  * This class solves two problems:
@@ -15,76 +15,89 @@
 class LightSensor {
   public:
     enum {
-        ADC_SAMPLES = 4,
+        ADC_SAMPLES = 8,
         ADC_CLOCK_DIVIDER = 8,
-        MIN_SENSOR_VAL = 10,
+        MIN_SENSOR_VAL = 10,  // affected by side lighting from the display LEDs
+                              // below this level
         MAX_SENSOR_VAL = 100,
-        MAX_JITTER = 15,
+        JITTER = 3,
 
-        HISTORY_SIZE = 10,
-
-        RANGE = 100,
+        HISTORY_SIZE = 80,
     };
 
   private:
-    uint16_t m_samples[ADC_SAMPLES] = {0};
-    uint16_t m_history[HISTORY_SIZE] = {0};
-    int m_pos{0};
+    uint16_t* m_samples{nullptr};
+    uint16_t* m_history{nullptr};
+    size_t m_historyPos{0};
+
+    ElapsedTime m_timeSinceBrightnessSet;
+    float m_curBrightness{0.0f};
 
   public:
     LightSensor() {
-        for (int i = 0; i < HISTORY_SIZE; ++i) {
+        m_samples = (uint16_t*)zalloc(ADC_SAMPLES * sizeof(uint16_t));
+        m_history = (uint16_t*)zalloc(HISTORY_SIZE * sizeof(uint16_t));
+
+        for (size_t i = 0; i < HISTORY_SIZE; ++i) {
             m_history[i] = GetCurrentADCValue();
         }
+        m_curBrightness = GetHistoryMean();
     }
 
-    uint16_t Get() {
-        uint32_t average = GetCurrentADCValue();
-
-        // average more, maybe not a great solution, not amazing at math
-        if ((uint16_t)average > m_history[m_pos] + MAX_JITTER ||
-            (uint16_t)average < m_history[m_pos] - MAX_JITTER) {
-            m_history[m_pos] = average;
-        }
-        if (m_pos++ == HISTORY_SIZE) {
-            m_pos = 0;
+    size_t Get() {
+        m_history[m_historyPos] = GetCurrentADCValue();
+        if (m_historyPos++ == HISTORY_SIZE) {
+            m_historyPos = 0;
         }
 
-        average = 0;
-        for (int i = 0; i < HISTORY_SIZE; i++) {
-            average += m_history[i];
+        uint16_t mean = GetHistoryMean();
+        if (m_timeSinceBrightnessSet.Ms() > 40) {
+            if (mean < m_curBrightness - JITTER ||
+                mean > m_curBrightness + JITTER) {
+                // move quickly toward current brightness
+                m_curBrightness = (mean + m_curBrightness) / 2;
+            } else {
+                // move slowly toward current brightness
+                if (m_curBrightness >= MAX_SENSOR_VAL - JITTER) {
+                    // increase the mean slightly so we can get to
+                    // MAX_SENSOR_VAL
+                    mean++;
+                }
+                const float val = (99.0f * m_curBrightness) + mean;
+                m_curBrightness = val / 100.0f;
+            }
+            m_timeSinceBrightnessSet.Reset();
         }
-        average /= HISTORY_SIZE;
 
-        return average;
+        return m_curBrightness;
     }
 
   private:
-    // get a smoothed, bounded value from the sensor
-    uint16_t GetCurrentADCValue() {
-        ReadADC();
-        uint32_t average = 0;
-        for (int i = 0; i < ADC_SAMPLES; i++) {
-            average += m_samples[i];
+    size_t GetHistoryMean() {
+        size_t average = 0;
+        for (size_t i = 0; i < HISTORY_SIZE; i++) {
+            average += m_history[i];
         }
-        average /= ADC_SAMPLES;
-        average = map(average, MIN_SENSOR_VAL, MAX_SENSOR_VAL, 0, RANGE);
-        average = constrain(average, 0, RANGE);
-        return (uint16_t)average;
+
+        return average / HISTORY_SIZE;
     }
 
-    // immediately read ADC samples into all ADC_SAMPLES slots
-    void ReadADC() {
+    // get a smoothed, bounded value from the sensor
+    size_t GetCurrentADCValue() {
         system_soft_wdt_stop();
         ets_intr_lock();
         noInterrupts();
 
-        for (int i = 0; i < ADC_SAMPLES; i++) {
-            system_adc_read_fast(m_samples, ADC_SAMPLES, ADC_CLOCK_DIVIDER);
-        }
+        system_adc_read_fast(m_samples, ADC_SAMPLES, ADC_CLOCK_DIVIDER);
 
         interrupts();
         ets_intr_unlock();
         system_soft_wdt_restart();
+
+        size_t mean = 0;
+        for (size_t i = 0; i < ADC_SAMPLES; i++) {
+            mean += m_samples[i];
+        }
+        return constrain((mean / ADC_SAMPLES), MIN_SENSOR_VAL, MAX_SENSOR_VAL);
     }
 };
