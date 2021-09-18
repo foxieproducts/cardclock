@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <functional>  // for std::function
 #include <vector>      // for std::vector
+
 #include "display.hpp"
 #include "settings.hpp"
 
