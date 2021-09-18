@@ -21,8 +21,6 @@ class Button {
     };
 
   private:
-    inline static std::vector<Button*> m_buttons;
-
     std::vector<int> m_pins;  // a Button can have multiple input pins
     bool m_currentPinState{false};
 
@@ -52,15 +50,12 @@ class Button {
         for (auto pin : m_pins) {
             pinMode(pin, inputType);
         }
-        m_buttons.push_back(this);
     }
 
-    static void Update() {
-        for (auto& button : m_buttons) {
-            if (button->m_enabled) {
-                button->CheckForPinStateChange();
-                button->CheckForEventsToSend();
-            }
+    void Update() {
+        if (m_enabled) {
+            CheckForPinStateChange();
+            CheckForEventsToSend();
         }
     }
 

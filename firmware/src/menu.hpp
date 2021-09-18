@@ -81,7 +81,10 @@ class MenuManager {
     size_t GetActive() { return m_activeMenu; }
 
     void Update() {
-        Button::Update();
+        m_btnUp.Update();
+        m_btnDown.Update();
+        m_btnLeft.Update();
+        m_btnRight.Update();
         m_menus[m_activeMenu]->Update();
     }
 
