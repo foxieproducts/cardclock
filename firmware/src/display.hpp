@@ -1,7 +1,9 @@
 #pragma once
 #include <Adafruit_NeoPixel.h>  // for communication with WS2812B LEDs
+#include <functional>           // for std::function
 #include <map>                  // for std::map
 #include <vector>               // for std::vector
+
 #include "button.hpp"
 #include "elapsed_time.hpp"
 #include "light_sensor.hpp"

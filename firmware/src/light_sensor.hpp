@@ -2,7 +2,8 @@
 #include <Arduino.h>         // for map()
 #include <stdint.h>          // for uint16_t and others
 #include <user_interface.h>  // for ESP-specific API calls
-#include <elapsed_time.hpp>
+
+#include "elapsed_time.hpp"
 
 /**
  * This class solves two problems:
