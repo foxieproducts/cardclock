@@ -1,12 +1,11 @@
 #pragma once
-#include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266httpUpdate.h>
-#include <user_interface.h>
-#include <memory>
+#include <user_interface.h>  // for ESP-specific API calls
+#include <memory>            // for std::shared_ptr
 
 #include "button.hpp"
 #include "display.hpp"

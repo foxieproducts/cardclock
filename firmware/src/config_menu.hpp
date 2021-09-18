@@ -1,5 +1,6 @@
 #pragma once
-#include <memory>
+#include <functional>  // for std::function
+#include <memory>      // for std::shared_ptr
 #include "elapsed_time.hpp"
 #include "foxie_wifi.hpp"
 #include "menu.hpp"

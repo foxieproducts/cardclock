@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include <memory>
-#include <vector>
+#include <memory>  // for std::shared_ptr
+#include <vector>  // for std::vector
 
 #include "button.hpp"
 #include "display.hpp"

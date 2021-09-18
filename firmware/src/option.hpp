@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include <vector>
+#include <functional>  // for std::function
+#include <vector>      // for std::vector
 #include "display.hpp"
 #include "settings.hpp"
 

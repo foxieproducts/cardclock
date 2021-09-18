@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
-#include <user_interface.h>
-#include <memory>
+#include <user_interface.h>  // for ESP-specific API calls
+#include <memory>            // for std::shared_ptr
 
 #include "clock.hpp"
 #include "config_menu.hpp"
