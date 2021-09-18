@@ -41,7 +41,7 @@ enum Display_e {
     SCROLL_DELAY_HORIZONTAL_MS = 10,
     SCROLL_DELAY_VERTICAL_MS = 35,
     FRAMES_PER_SECOND = 30,
-    LIGHT_SENSOR_UPDATE_MS = 10,
+    LIGHT_SENSOR_UPDATE_MS = 2,
     LEDS_PIN = 15,
 };
 
@@ -59,6 +59,11 @@ class Display {
         void setPixelColor(uint16_t n, uint32_t c) {
             m_pixels[n] = c;
             ((Adafruit_NeoPixel*)this)->setPixelColor(n, c);
+        }
+        void restorePixels() {
+            for (size_t i = 0; i < TOTAL_LEDS; ++i) {
+                ((Adafruit_NeoPixel*)this)->setPixelColor(i, m_pixels[i]);
+            }
         }
         uint32_t getPixelColor(uint16_t n) { return m_pixels[n]; }
     };
@@ -101,8 +106,9 @@ class Display {
             int minBrightness = m_settings[F("MINB")].as<int>();
             int maxBrightness = m_settings[F("MAXB")].as<int>();
 
-            SetBrightness(map(m_currentBrightness, 0, LightSensor::RANGE,
-                              minBrightness, maxBrightness));
+            SetBrightness(map(m_currentBrightness, LightSensor::MIN_SENSOR_VAL,
+                              LightSensor::MAX_SENSOR_VAL, minBrightness,
+                              maxBrightness));
             Show();
         }
     }
@@ -266,6 +272,7 @@ class Display {
 
     uint16_t GetBrightness() { return m_currentBrightness; }
     void SetBrightness(const uint8_t brightness) {
+        m_leds.restorePixels();
         m_leds.setBrightness(brightness);
     }
 
