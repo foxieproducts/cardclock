@@ -137,7 +137,7 @@ class TimeMenu : public Menu {
     void DrawClockDigits() {
         m_display.Clear(BLACK);
 
-        int color = m_rtc.Millis() < 500 ? GREEN : 0x00AF00;
+        uint32_t color = m_rtc.Millis() < 500 ? GREEN : 0x00AF00;
 
         char text[10];
         if (m_mode == SET_SECOND) {

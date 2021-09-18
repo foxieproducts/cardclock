@@ -52,21 +52,30 @@ class Display {
     // Adafruit_NeoPixel::setBrightness() is destructive to the pixel
     // data, pixel read operations at low brightness behave poorly. Having this
     // extra buffer solves this problem, which allows better horizontal
-    // scrolling in all brightness conditions
+    // scrolling in all brightness conditions. In addition, provides the ability
+    // to intercept setPixelColor calls to change the color of any pixels
     class PixelsWithBuffer : public Adafruit_NeoPixel {
         using Adafruit_NeoPixel::Adafruit_NeoPixel;
         uint32_t m_pixels[TOTAL_LEDS] = {0};
+        std::function<void(uint32_t&)> m_colorOverrideFunc;
 
       public:
-        void setPixelColor(uint16_t n, uint32_t c) {
-            m_pixels[n] = c;
-            ((Adafruit_NeoPixel*)this)->setPixelColor(n, c);
+        void setPixelColor(uint16_t num, uint32_t color) {
+            if (m_colorOverrideFunc) {
+                m_colorOverrideFunc(color);
+            }
+            m_pixels[num] = color;
+            ((Adafruit_NeoPixel*)this)->setPixelColor(num, color);
         }
         void restorePixels() {
             for (size_t i = 0; i < TOTAL_LEDS; ++i) {
                 ((Adafruit_NeoPixel*)this)->setPixelColor(i, m_pixels[i]);
             }
         }
+        void setColorOverride(std::function<void(uint32_t&)> func) {
+            m_colorOverrideFunc = func;
+        }
+        void clearColorOverride() { m_colorOverrideFunc = nullptr; }
         uint32_t getPixelColor(uint16_t n) { return m_pixels[n]; }
     };
 
@@ -94,7 +103,7 @@ class Display {
         }
     }
 
-    Adafruit_NeoPixel& GetLEDs() { return m_leds; };
+    PixelsWithBuffer& GetLEDs() { return m_leds; };
 
     void Update() {
         if (m_sinceLastLightSensorUpdate.Ms() > LIGHT_SENSOR_UPDATE_MS) {
@@ -127,24 +136,24 @@ class Display {
         system_soft_wdt_restart();
     }
 
-    void Clear(int color = BLACK, const bool includeRoundLEDs = false) {
+    void Clear(uint32_t color = BLACK, const bool includeRoundLEDs = false) {
         int num = WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
         for (int i = 0; i < num; ++i) {
             m_leds.setPixelColor(i, color);
         }
     }
 
-    void ClearRoundLEDs(int color = BLACK) {
+    void ClearRoundLEDs(uint32_t color = BLACK) {
         for (int i = FIRST_HOUR_LED; i < TOTAL_LEDS; ++i) {
             m_leds.setPixelColor(i, color);
         }
     }
 
-    void DrawPixel(const int num, const int color) {
+    void DrawPixel(const int num, const uint32_t color) {
         m_leds.setPixelColor(num, color);
     }
 
-    int DrawText(int x, String text, int color) {
+    int DrawText(int x, String text, uint32_t color) {
         text.toUpperCase();
         int textWidth = 0;
 
@@ -157,7 +166,7 @@ class Display {
     }
 
     void DrawTextScrolling(String text,
-                           int color,
+                           uint32_t color,
                            int delayMs = SCROLLING_TEXT_MS) {
         const auto length = DrawText(0, text, color);
 
@@ -172,7 +181,7 @@ class Display {
         }
     }
 
-    void DrawTextCentered(String text, int color) {
+    void DrawTextCentered(String text, uint32_t color) {
         int pos = 9 - (text.length() * 2);
         DrawText(pos, text, color);
     }
@@ -199,14 +208,14 @@ class Display {
         ElapsedTime::Delay(delayMs);
     }
 
-    void DrawMinuteLED(const int minute, const int color) {
+    void DrawMinuteLED(const int minute, const uint32_t color) {
         DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
     }
-    void DrawHourLED(const int hour, const int color) {
+    void DrawHourLED(const int hour, const uint32_t color) {
         DrawPixel(FIRST_HOUR_LED + hour - 1, color);
     }
 
-    void DrawSecondLEDs(const int minute, const int color) {
+    void DrawSecondLEDs(const int minute, const uint32_t color) {
         DrawPixel(FIRST_HOUR_LED + GetSecondLED(minute), color);
         DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
     }
@@ -219,7 +228,7 @@ class Display {
         return minute >= 5 ? GetMinuteLED(minute) - 1 : 11;
     }
 
-    int DrawChar(const int x, char character, int color) {
+    int DrawChar(const int x, char character, uint32_t color) {
         std::vector<uint8_t> charData;
         // clang-format off
 
@@ -281,7 +290,7 @@ class Display {
         return GetBrightness() == LightSensor::MIN_SENSOR_VAL;
     }
 
-    static int ScaleBrightness(const int color, const float brightness) {
+    static int ScaleBrightness(const uint32_t color, const float brightness) {
         const float r = ((color & 0xFF0000) >> 16) * brightness;
         const float g = ((color & 0x00FF00) >> 8) * brightness;
         const float b = (color & 0x0000FF) * brightness;
@@ -290,7 +299,7 @@ class Display {
 
   private:
     void MovePixel(int fromCol, int fromRow, int toCol, int toRow) {
-        int color = m_leds.getPixelColor(fromRow * WIDTH + fromCol);
+        uint32_t color = m_leds.getPixelColor(fromRow * WIDTH + fromCol);
 
         if (toCol >= 0 && toCol < WIDTH && toRow >= 0 && toRow < HEIGHT) {
             DrawPixel(toRow * WIDTH + toCol, color);
