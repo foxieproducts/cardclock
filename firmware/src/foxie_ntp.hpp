@@ -17,6 +17,7 @@ class FoxieNTP {
     NTPClient m_ntpClient{m_udp, "time.nist.gov", 0, int(ONE_MINUTE)};
     ElapsedTime m_sinceLastUpdate;
     bool m_isInitialized{false};
+    bool m_ntpSynced{false};
 
   public:
     FoxieNTP(Settings& settings, Rtc& rtc) : m_settings(settings), m_rtc(rtc) {}
@@ -28,11 +29,10 @@ class FoxieNTP {
                 m_ntpClient.setTimeOffset(m_settings["UTC"].as<int>() * 60 *
                                           60);
                 m_isInitialized = true;
-                m_ntpClient.forceUpdate();
-                UpdateRTCTime();
+                m_ntpSynced = m_ntpClient.forceUpdate();
             } else {
-                m_ntpClient.update();
-                if (m_sinceLastUpdate.Ms() >= ONE_MINUTE) {
+                m_ntpSynced = m_ntpClient.update();
+                if (m_sinceLastUpdate.Ms() >= ONE_MINUTE && m_ntpSynced) {
                     UpdateRTCTime();
                 }
             }
