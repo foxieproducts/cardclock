@@ -11,9 +11,12 @@ class Clock : public Menu {
         MODE_ANIM_OFF,
         MODE_SHIMMER,
         MODE_RAINBOW,
-
-        // MODE_MARQUEE,
-        // MODE_BINARY,
+        MODE_MARQUEE,
+        MODE_MARQUEE_SHIMMER,
+        MODE_MARQUEE_RAINBOW,
+        MODE_BINARY,
+        MODE_BINARY_SHIMMER,
+        MODE_BINARY_RAINBOW,
         TOTAL_MODES,
     };
 
@@ -24,10 +27,13 @@ class Clock : public Menu {
     ElapsedTime m_waitingToSaveSettings;
     ElapsedTime m_waitToAnimate;
     ElapsedTime m_showingColorWheel;
+    ElapsedTime m_marqueeMovement;
 
     uint8_t m_colorWheelPos{0};
     uint32_t m_currentColor{0};
     bool m_displayingColorWheel{false};
+
+    int m_marqueePos{0};
 
   public:
     Clock(Display& display, Rtc& rtc, Settings& settings)
@@ -61,12 +67,47 @@ class Clock : public Menu {
             m_displayingColorWheel = false;
         }
 
-        DrawClockDigits(color);
-        DrawSeparator(color);
-        if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
-            // it's fitting that 42 is exactly the right place for the WiFi
-            // status LED.
-            m_display.DrawPixel(42, color);
+        switch (m_mode) {
+            case MODE_ANIM_OFF:
+            case MODE_SHIMMER:
+            case MODE_RAINBOW:
+                DrawClockDigits(color);
+                DrawSeparator(color);
+
+                if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
+                    // it's fitting that 42 is exactly the right place for
+                    // the WiFi status LED.
+                    m_display.DrawPixel(42, color);
+                }
+                break;
+
+            case MODE_MARQUEE:
+            case MODE_MARQUEE_SHIMMER:
+            case MODE_MARQUEE_RAINBOW: {
+                m_display.Clear();
+                char text[20];
+                sprintf(text, "%2d:%02d:%02d",
+                        m_settings[F("24HR")] == F("ON") ? m_rtc.Hour()
+                                                         : m_rtc.Hour12(),
+                        m_rtc.Minute(), m_rtc.Second());
+                int length =
+                    m_display.DrawText(m_marqueePos, text, m_currentColor) + 1;
+                if (m_marqueeMovement.Ms() > 100) {
+                    m_marqueeMovement.Reset();
+                    if (--m_marqueePos == -length) {
+                        m_marqueePos = WIDTH;
+                    }
+                }
+                break;
+            }
+
+            case MODE_BINARY:
+            case MODE_BINARY_SHIMMER:
+            case MODE_BINARY_RAINBOW:
+                break;
+
+            default:
+                break;
         }
 
         if (m_shouldSaveSettings && m_waitingToSaveSettings.Ms() >= 2000) {
@@ -85,8 +126,8 @@ class Clock : public Menu {
 
             m_displayingColorWheel = true;
             m_showingColorWheel.Reset();
-            // wait to save the setting until the user has stopped changing the
-            // color for a few seconds
+            // wait to save the setting until the user has stopped changing
+            // the color for a few seconds
             m_waitingToSaveSettings.Reset();
             m_shouldSaveSettings = true;
         }
@@ -113,70 +154,54 @@ class Clock : public Menu {
 
   private:
     void SetMode(bool showMessage = true) {
+        m_display.GetLEDs().clearColorOverride();
+        m_marqueePos = WIDTH;
+
         String message;
         switch (m_mode) {
             case MODE_ANIM_OFF:
-                m_display.GetLEDs().clearColorOverride();
                 message = F("ANIM OFF");
                 break;
 
             case MODE_SHIMMER:
-                m_display.GetLEDs().setColorOverride([&](uint16_t num,
-                                                         uint32_t& color) {
-                    static uint8_t jump = 0;
-                    static int pixelsChanged = 0;
-                    static float multiplier = 1.0f;
-                    const float ANIM_TIME_MS = 600.0f;
-                    if (m_waitToAnimate.Ms() > ANIM_TIME_MS) {
-                        m_waitToAnimate.Reset();
-                        jump--;
-                    }
-
-                    if (num == 0) {
-                        pixelsChanged = 0;
-                    }
-
-                    if (color != BLACK && num < WIDTH * HEIGHT) {
-                        if ((++pixelsChanged + jump) % 4 == 0) {
-                            multiplier = m_waitToAnimate.Ms() / ANIM_TIME_MS;
-                            if (m_waitToAnimate.Ms() < ANIM_TIME_MS / 2) {
-                                multiplier = 1.0f - multiplier;
-                            }
-
-                            color = Display::ScaleBrightness(
-                                color, 0.1f + (multiplier * 0.7f));
-                        }
-                    }
-                });
+                AddShimmerEffect();
                 message = F("SHIMMER");
                 break;
 
             case MODE_RAINBOW:
-                m_display.GetLEDs().setColorOverride(
-                    [&](uint16_t num, uint32_t& color) {
-                        static uint8_t baseColor = 128;
-                        static uint8_t curColor = 0;
-
-                        if (m_waitToAnimate.Ms() > 50) {
-                            m_waitToAnimate.Reset();
-                            baseColor++;
-                        }
-                        if (num == 0) {
-                            curColor = 0;
-                        }
-
-                        // DARK_GRAY is the color of the analog clock ring
-                        if (color != BLACK && color != DARK_GRAY) {
-                            curColor += 4;
-                            m_currentColor = color =
-                                Display::ColorWheel(baseColor + curColor);
-                        }
-                    });
+                AddRainbowEffect();
                 message = F("RAINBOW");
                 break;
 
+            case MODE_MARQUEE:
+                message = F("MARQUEE");
+                break;
+
+            case MODE_MARQUEE_SHIMMER:
+                AddShimmerEffect();
+                message = F("MARQUEE SHIMMER");
+                break;
+
+            case MODE_MARQUEE_RAINBOW:
+                AddRainbowEffect();
+                message = F("MARQUEE RAINBOW");
+                break;
+
+            case MODE_BINARY:
+                message = F("BINARY");
+                break;
+
+            case MODE_BINARY_SHIMMER:
+                AddShimmerEffect();
+                message = F("BINARY SHIMMER");
+                break;
+
+            case MODE_BINARY_RAINBOW:
+                AddRainbowEffect();
+                message = F("BINARY RAINBOW");
+                break;
+
             default:
-                m_display.GetLEDs().clearColorOverride();
                 message = F("MODE ") + String(m_mode);
                 break;
         }
@@ -233,5 +258,58 @@ class Clock : public Menu {
             m_display.DrawHourLED(m_rtc.Hour12(), m_currentColor);
             m_display.DrawMinuteLED(m_rtc.Minute(), m_currentColor);
         }
+    }
+
+    void AddShimmerEffect() {
+        m_display.GetLEDs().setColorOverride(
+            [&](uint16_t num, uint32_t& color) {
+                static uint8_t jump = 0;
+                static int pixelsChanged = 0;
+                static float multiplier = 1.0f;
+                const float ANIM_TIME_MS = 600.0f;
+                if (m_waitToAnimate.Ms() > ANIM_TIME_MS) {
+                    m_waitToAnimate.Reset();
+                    jump--;
+                }
+
+                if (num == 0) {
+                    pixelsChanged = 0;
+                }
+
+                if (color != BLACK && num < WIDTH * HEIGHT) {
+                    if ((++pixelsChanged + jump) % 4 == 0) {
+                        multiplier = m_waitToAnimate.Ms() / ANIM_TIME_MS;
+                        if (m_waitToAnimate.Ms() < ANIM_TIME_MS / 2) {
+                            multiplier = 1.0f - multiplier;
+                        }
+
+                        color = Display::ScaleBrightness(
+                            color, 0.1f + (multiplier * 0.7f));
+                    }
+                }
+            });
+    }
+
+    void AddRainbowEffect() {
+        m_display.GetLEDs().setColorOverride(
+            [&](uint16_t num, uint32_t& color) {
+                static uint8_t baseColor = 128;
+                static uint8_t curColor = 0;
+
+                if (m_waitToAnimate.Ms() > 50) {
+                    m_waitToAnimate.Reset();
+                    baseColor++;
+                }
+                if (num == 0) {
+                    curColor = 0;
+                }
+
+                // DARK_GRAY is the color of the analog clock ring
+                if (color != BLACK && color != DARK_GRAY) {
+                    curColor += 4;
+                    m_currentColor = color =
+                        Display::ColorWheel(baseColor + curColor);
+                }
+            });
     }
 };
