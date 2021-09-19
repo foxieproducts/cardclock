@@ -26,8 +26,6 @@ class FoxieNTP {
         if (WiFi.isConnected()) {
             if (!m_isInitialized) {
                 m_ntpClient.begin();
-                m_ntpClient.setTimeOffset(m_settings["UTC"].as<int>() * 60 *
-                                          60);
                 m_isInitialized = true;
             } else {
                 if (m_ntpClient.update() && !m_ntpSynced) {
