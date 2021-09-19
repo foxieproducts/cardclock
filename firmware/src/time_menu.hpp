@@ -36,7 +36,7 @@ class TimeMenu : public Menu {
         DrawClockDigits();
     }
 
-    virtual void Begin() {
+    virtual void Activate() {
         m_mode = SET_HOUR;
         m_timeChanged = false;
         m_secondsChanged = false;

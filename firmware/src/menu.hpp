@@ -17,7 +17,8 @@ class Menu {
         : m_display(display), m_settings(settings) {}
 
     virtual void Update() = 0;
-    virtual void Begin() {}
+    virtual void Activate() {}
+    virtual void Hide() {}
     virtual bool Up(const Button::Event_e evt) { return false; }
     virtual bool Down(const Button::Event_e evt) { return false; }
     virtual bool Left(const Button::Event_e evt) { return false; }
@@ -57,8 +58,7 @@ class MenuManager {
                 if (m_activeMenu == 0) {
                     return;
                 }
-                --m_activeMenu;
-                m_menus[m_activeMenu]->Begin();
+                ActivateMenu(m_activeMenu - 1);
             }
         };
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
@@ -67,8 +67,7 @@ class MenuManager {
                 if (m_activeMenu == (int)m_menus.size() - 1) {
                     return;
                 }
-                m_activeMenu++;
-                m_menus[m_activeMenu]->Begin();
+                ActivateMenu(m_activeMenu + 1);
             }
         };
     }
@@ -90,8 +89,9 @@ class MenuManager {
 
     void ActivateMenu(size_t menuNum) {
         if (menuNum < m_menus.size()) {
+            m_menus[m_activeMenu]->Hide();
             m_activeMenu = menuNum;
-            m_menus[m_activeMenu]->Begin();
+            m_menus[m_activeMenu]->Activate();
         }
     }
 };

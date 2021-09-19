@@ -57,12 +57,14 @@ class Display {
     class PixelsWithBuffer : public Adafruit_NeoPixel {
         using Adafruit_NeoPixel::Adafruit_NeoPixel;
         uint32_t m_pixels[TOTAL_LEDS] = {0};
-        std::function<void(uint32_t&)> m_colorOverrideFunc;
+        std::function<void(uint16_t num, uint32_t&)> m_colorOverrideFunc;
 
       public:
-        void setPixelColor(uint16_t num, uint32_t color) {
-            if (m_colorOverrideFunc) {
-                m_colorOverrideFunc(color);
+        void setPixelColor(uint16_t num,
+                           uint32_t color,
+                           bool forceColor = false) {
+            if (m_colorOverrideFunc && !forceColor) {
+                m_colorOverrideFunc(num, color);
             }
             m_pixels[num] = color;
             ((Adafruit_NeoPixel*)this)->setPixelColor(num, color);
@@ -72,7 +74,8 @@ class Display {
                 ((Adafruit_NeoPixel*)this)->setPixelColor(i, m_pixels[i]);
             }
         }
-        void setColorOverride(std::function<void(uint32_t&)> func) {
+        void setColorOverride(
+            std::function<void(uint16_t num, uint32_t&)> func) {
             m_colorOverrideFunc = func;
         }
         void clearColorOverride() { m_colorOverrideFunc = nullptr; }
@@ -83,7 +86,8 @@ class Display {
 
     PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
-    int m_currentBrightness{0};
+    size_t m_currentBrightness{0};
+    size_t m_lastBrightness{0};
     ElapsedTime m_sinceLastShow;
     ElapsedTime m_sinceLastLightSensorUpdate;
 
@@ -105,21 +109,24 @@ class Display {
 
     PixelsWithBuffer& GetLEDs() { return m_leds; };
 
-    void Update() {
+    void Update(bool force = false) {
         if (m_sinceLastLightSensorUpdate.Ms() > LIGHT_SENSOR_UPDATE_MS) {
             m_sinceLastLightSensorUpdate.Reset();
             m_currentBrightness = m_lightSensor.Get();
         }
 
-        if (m_sinceLastShow.Ms() > (1000 / FRAMES_PER_SECOND)) {
+        if (m_sinceLastShow.Ms() > (1000 / FRAMES_PER_SECOND) || force) {
             m_sinceLastShow.Reset();
 
             int minBrightness = m_settings[F("MINB")].as<int>();
             int maxBrightness = m_settings[F("MAXB")].as<int>();
 
-            SetBrightness(map(m_currentBrightness, LightSensor::MIN_SENSOR_VAL,
-                              LightSensor::MAX_SENSOR_VAL, minBrightness,
-                              maxBrightness));
+            if (m_currentBrightness != m_lastBrightness) {
+                m_lastBrightness = m_currentBrightness;
+                SetBrightness(map(
+                    m_currentBrightness, LightSensor::MIN_SENSOR_VAL,
+                    LightSensor::MAX_SENSOR_VAL, minBrightness, maxBrightness));
+            }
             Show();
         }
     }
@@ -149,8 +156,10 @@ class Display {
         }
     }
 
-    void DrawPixel(const int num, const uint32_t color) {
-        m_leds.setPixelColor(num, color);
+    void DrawPixel(const int num,
+                   const uint32_t color,
+                   bool forceColor = false) {
+        m_leds.setPixelColor(num, color, forceColor);
     }
 
     int DrawText(int x, String text, uint32_t color) {
@@ -170,14 +179,20 @@ class Display {
                            int delayMs = SCROLLING_TEXT_MS) {
         const auto length = DrawText(0, text, color);
 
-        for (int i = WIDTH; i > -length; --i) {
+        ElapsedTime waitToScroll;
+        for (int i = WIDTH; i > -length;) {
             Clear();
             DrawText(i, text, color);
-            Show();
-
-            // pressing a button will speed up a long blocking scrolling message
-            ElapsedTime::Delay(Button::AreAnyButtonsPressed() ? delayMs / 3
-                                                              : delayMs);
+            // pressing a button will speed up a long blocking scrolling
+            // message
+            waitToScroll.Reset();
+            int adjustedDelay =
+                Button::AreAnyButtonsPressed() ? delayMs / 3 : delayMs;
+            while (waitToScroll.Ms() < adjustedDelay) {
+                Update(true);
+                yield();
+            }
+            --i;
         }
     }
 
@@ -215,9 +230,11 @@ class Display {
         DrawPixel(FIRST_HOUR_LED + hour - 1, color);
     }
 
-    void DrawSecondLEDs(const int minute, const uint32_t color) {
-        DrawPixel(FIRST_HOUR_LED + GetSecondLED(minute), color);
-        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
+    void DrawSecondLEDs(const int minute,
+                        const uint32_t color,
+                        const bool forceColor = false) {
+        DrawPixel(FIRST_HOUR_LED + GetSecondLED(minute), color, forceColor);
+        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color, forceColor);
     }
 
     int GetMinuteLED(const int minute) {
@@ -285,6 +302,7 @@ class Display {
     void SetBrightness(const uint8_t brightness) {
         m_leds.restorePixels();
         m_leds.setBrightness(brightness);
+        m_lastBrightness = m_currentBrightness = brightness;
     }
     bool IsAtMinimumBrightness() {
         return GetBrightness() == LightSensor::MIN_SENSOR_VAL;

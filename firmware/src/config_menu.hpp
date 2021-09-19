@@ -77,7 +77,7 @@ class ConfigMenu : public Menu {
         m_display.DrawHourLED(m_menuOption + 1, GREEN);
     }
 
-    virtual void Begin() { m_display.ScrollHorizontal(WIDTH, -1); }
+    virtual void Activate() { m_display.ScrollHorizontal(WIDTH, -1); }
 
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
