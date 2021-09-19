@@ -14,6 +14,7 @@ class Clock : public Menu {
         MODE_MARQUEE,
         MODE_MARQUEE_RAINBOW,
         MODE_BINARY,
+        MODE_BINARY_SHIMMER,
         TOTAL_MODES,
     };
 
@@ -91,6 +92,7 @@ class Clock : public Menu {
                 break;
 
             case MODE_BINARY:
+            case MODE_BINARY_SHIMMER:
                 DrawBinary();
                 break;
 
@@ -172,6 +174,11 @@ class Clock : public Menu {
 
             case MODE_BINARY:
                 message = F("BINARY");
+                break;
+
+            case MODE_BINARY_SHIMMER:
+                AddShimmerEffect();
+                message = F("BINARY SHIMMER");
                 break;
 
             default:
