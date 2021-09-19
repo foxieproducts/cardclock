@@ -40,7 +40,7 @@ class Button {
         int repeatRate{50};
         int delayBeforeRepeat{400};
         int delayBeforePress{0};  // must be held prior to a PRESS event
-        int debounceTime{20};
+        int debounceTime{5};
         HandlerFunc_t handlerFunc;
     } config;
 
