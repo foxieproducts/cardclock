@@ -34,14 +34,14 @@ void setup() {
         std::make_shared<Clock>(*display, *rtc, *settings));  // clock menu 1
 
     auto configMenu = std::make_shared<ConfigMenu>(*display, *settings);
-    configMenu->AddTextSetting(F("24HR"), {"OFF", "ON"});
     configMenu->AddRangeSetting(F("MINB"), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
     configMenu->AddRangeSetting(F("MAXB"), MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-    configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
     configMenu->AddTextSetting(F("CLKB"), {F("OFF"), F("ON")});
     configMenu->AddTextSetting(F("WLED"), {F("OFF"), F("ON")});
+    configMenu->AddTextSetting(F("24HR"), {"OFF", "ON"});
     configMenu->AddRangeSetting(F("UTC"), -12, 12,
                                 [&]() { ntp->UpdateRTCTime(); });
+    configMenu->AddTextSetting(F("WIFI"), {"OFF", "ON", "CFG"});
     configMenu->AddRunFuncSetting(F("INFO"), [&]() {
         String info;
         info += F("IP:");
