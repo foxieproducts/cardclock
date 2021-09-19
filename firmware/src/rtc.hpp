@@ -1,6 +1,8 @@
 #pragma once
 #include <Rtc_Pcf8563.h>
 
+#include "settings.hpp"
+
 class Rtc {
   private:
     enum {
@@ -9,12 +11,13 @@ class Rtc {
     };
 
     Rtc_Pcf8563 m_rtc;
+    Settings& m_settings;
     inline static bool m_isInitialized{false};
     inline static bool m_receivedInterrupt{false};
     inline static int m_millisAtInterrupt{0};
 
   public:
-    Rtc() { m_rtc.getDateTime(); }
+    Rtc(Settings& settings) : m_settings(settings) { m_rtc.getDateTime(); }
 
     bool IsInitialized() { return m_isInitialized; }
 
@@ -32,7 +35,10 @@ class Rtc {
         }
     }
 
-    int Hour() { return m_rtc.getHour(); }
+    int Hour() {
+        return m_settings[F("24HR")] == F("ON") ? m_rtc.getHour()
+                                                : Conv24to12(m_rtc.getHour());
+    }
     int Hour12() { return Conv24to12(m_rtc.getHour()); }
     int Minute() { return m_rtc.getMinute(); }
     int Second() { return m_rtc.getSecond(); }

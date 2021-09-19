@@ -147,10 +147,12 @@ class TimeMenu : public Menu {
             sprintf(text, "%02d", m_second);
             m_display.DrawText(10, text, m_mode == SET_SECOND ? color : GRAY);
         } else {
-            sprintf(text, "%2d",
-                    m_settings[F("24HR")] == F("ON")
-                        ? m_hour
-                        : m_rtc.Conv24to12(m_hour));
+            bool is24 = m_settings[F("24HR")] == F("ON");
+            if (is24) {
+                sprintf(text, "%02d", m_hour);
+            } else {
+                sprintf(text, "%2d", m_rtc.Conv24to12(m_hour));
+            }
             m_display.DrawText(0, text, m_mode == SET_HOUR ? color : GRAY);
 
             sprintf(text, "%02d", m_minute);

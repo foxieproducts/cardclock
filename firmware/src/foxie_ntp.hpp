@@ -29,10 +29,13 @@ class FoxieNTP {
                 m_ntpClient.setTimeOffset(m_settings["UTC"].as<int>() * 60 *
                                           60);
                 m_isInitialized = true;
-                m_ntpSynced = m_ntpClient.forceUpdate();
             } else {
-                m_ntpSynced = m_ntpClient.update();
-                if (m_sinceLastUpdate.Ms() >= ONE_MINUTE && m_ntpSynced) {
+                if (m_ntpClient.update() && !m_ntpSynced) {
+                    m_sinceLastUpdate.Reset();
+                    m_ntpSynced = true;
+                    UpdateRTCTime();
+                } else if (m_sinceLastUpdate.Ms() >= ONE_MINUTE) {
+                    m_sinceLastUpdate.Reset();
                     UpdateRTCTime();
                 }
             }
@@ -48,7 +51,6 @@ class FoxieNTP {
             m_ntpClient.getSeconds() != m_rtc.Second()) {
             m_rtc.SetTime(m_ntpClient.getHours(), m_ntpClient.getMinutes(),
                           m_ntpClient.getSeconds());
-            m_sinceLastUpdate.Reset();
         }
     }
 };

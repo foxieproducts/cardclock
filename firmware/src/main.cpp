@@ -25,7 +25,7 @@ void setup() {
     CheckButtonsOnBoot(*settings, *display, *wifi);
 
     auto menuMgr = std::make_shared<MenuManager>(*display, *settings);
-    auto rtc = std::make_shared<Rtc>();
+    auto rtc = std::make_shared<Rtc>(*settings);
     auto ntp = std::make_shared<FoxieNTP>(*settings, *rtc);
 
     menuMgr->Add(
