@@ -86,7 +86,8 @@ class FoxieWiFi {
         m_display.Show();
 
         if (m_wifiManager->autoConnect(String(F("Foxie_WiFiSetup")).c_str())) {
-            m_display.DrawTextScrolling(F("SUCCESS"), GREEN);
+            m_display.DrawTextScrolling(
+                F("Connected, adjust UTC offset for correct time."), GREEN);
             m_settings[F("WIFI")] = F("ON");
             m_settings[F("wifi_configured")] = F("1");
         } else {
@@ -129,7 +130,7 @@ class FoxieWiFi {
             m_display.Clear();
             m_display.DrawTextCentered(
                 String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);
-            m_display.Show();
+            m_display.Update();
             if (Button::AreAnyButtonsPressed() == PIN_BTN_LEFT) {
                 while (Button::AreAnyButtonsPressed()) {
                     yield();

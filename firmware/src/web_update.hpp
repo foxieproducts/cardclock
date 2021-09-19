@@ -53,7 +53,7 @@ class WebUpdate {
                 m_display.Clear();
                 m_display.DrawTextCentered(
                     String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);
-                m_display.Show();
+                m_display.Update();
                 if (Button::AreAnyButtonsPressed() == PIN_BTN_LEFT &&
                     m_settings[F("DEVL")] == F("ON")) {
                     while (Button::AreAnyButtonsPressed()) {
