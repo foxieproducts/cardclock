@@ -12,12 +12,13 @@ class Clock : public Menu {
         MODE_SHIMMER,
         MODE_RAINBOW,
         MODE_MARQUEE,
-        MODE_MARQUEE_SHIMMER,
         MODE_MARQUEE_RAINBOW,
         MODE_BINARY,
-        MODE_BINARY_SHIMMER,
-        MODE_BINARY_RAINBOW,
         TOTAL_MODES,
+    };
+
+    enum {
+        MARQUEE_DELAY_MS = 150,
     };
 
     Rtc& m_rtc;
@@ -52,6 +53,9 @@ class Clock : public Menu {
             m_settings[F("MODE")] = m_mode;
         } else {
             m_mode = m_settings[F("MODE")].as<int>();
+            if (m_mode >= TOTAL_MODES) {
+                m_mode = MODE_ANIM_OFF;
+            }
         }
 
         if (!m_settings.containsKey(F("CLKB"))) {
@@ -72,7 +76,7 @@ class Clock : public Menu {
             case MODE_SHIMMER:
             case MODE_RAINBOW:
                 DrawClockDigits(color);
-                DrawSeparator(color);
+                DrawSeparator(8, color);
 
                 if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
                     // it's fitting that 42 is exactly the right place for
@@ -82,28 +86,12 @@ class Clock : public Menu {
                 break;
 
             case MODE_MARQUEE:
-            case MODE_MARQUEE_SHIMMER:
-            case MODE_MARQUEE_RAINBOW: {
-                m_display.Clear();
-                char text[20];
-                sprintf(text, "%2d:%02d:%02d",
-                        m_settings[F("24HR")] == F("ON") ? m_rtc.Hour()
-                                                         : m_rtc.Hour12(),
-                        m_rtc.Minute(), m_rtc.Second());
-                int length =
-                    m_display.DrawText(m_marqueePos, text, m_currentColor) + 1;
-                if (m_marqueeMovement.Ms() > 100) {
-                    m_marqueeMovement.Reset();
-                    if (--m_marqueePos == -length) {
-                        m_marqueePos = WIDTH;
-                    }
-                }
+            case MODE_MARQUEE_RAINBOW:
+                DrawMarquee();
                 break;
-            }
 
             case MODE_BINARY:
-            case MODE_BINARY_SHIMMER:
-            case MODE_BINARY_RAINBOW:
+                DrawBinary();
                 break;
 
             default:
@@ -177,11 +165,6 @@ class Clock : public Menu {
                 message = F("MARQUEE");
                 break;
 
-            case MODE_MARQUEE_SHIMMER:
-                AddShimmerEffect();
-                message = F("MARQUEE SHIMMER");
-                break;
-
             case MODE_MARQUEE_RAINBOW:
                 AddRainbowEffect();
                 message = F("MARQUEE RAINBOW");
@@ -189,16 +172,6 @@ class Clock : public Menu {
 
             case MODE_BINARY:
                 message = F("BINARY");
-                break;
-
-            case MODE_BINARY_SHIMMER:
-                AddShimmerEffect();
-                message = F("BINARY SHIMMER");
-                break;
-
-            case MODE_BINARY_RAINBOW:
-                AddRainbowEffect();
-                message = F("BINARY RAINBOW");
                 break;
 
             default:
@@ -220,23 +193,25 @@ class Clock : public Menu {
         m_display.Clear();
 
         char text[10];
-        sprintf(
-            text, "%2d",
-            m_settings[F("24HR")] == F("ON") ? m_rtc.Hour() : m_rtc.Hour12());
+        if (m_settings[F("24HR")] == F("ON")) {
+            sprintf(text, "%02d", m_rtc.Hour());
+        } else {
+            sprintf(text, "%2d", m_rtc.Hour());
+        }
         m_display.DrawText(0, text, color);
         sprintf(text, "%02d", m_rtc.Minute());
         m_display.DrawText(10, text, color);
     }
 
-    void DrawSeparator(uint32_t color) {
+    void DrawSeparator(int pos, uint32_t color) {
         const float ms = m_rtc.Millis() / 1000.0f;
         const int transitionColor = Display::ScaleBrightness(
             m_currentColor,
             0.2f + (m_rtc.Second() % 2 ? ms : 1.0f - ms) * 0.8f);
 
         // force the pixels to be drawn in the edited color
-        m_display.DrawPixel(WIDTH * 1 + 8, transitionColor, true);
-        m_display.DrawPixel(WIDTH * 3 + 8, transitionColor, true);
+        m_display.DrawPixel(WIDTH * 1 + pos, transitionColor, true);
+        m_display.DrawPixel(WIDTH * 3 + pos, transitionColor, true);
     }
 
     void DrawAnalog(uint32_t color) {
@@ -255,8 +230,83 @@ class Clock : public Menu {
             m_display.DrawSecondLEDs(
                 m_rtc.Second(), Display::ScaleBrightness(m_currentColor, 0.4f),
                 true);
-            m_display.DrawHourLED(m_rtc.Hour12(), m_currentColor);
+            m_display.DrawHourLED(m_rtc.Hour(), m_currentColor);
             m_display.DrawMinuteLED(m_rtc.Minute(), m_currentColor);
+        }
+    }
+
+    void DrawMarquee() {
+        m_display.Clear();
+        char text[20];
+        if (m_settings[F("24HR")] == F("ON")) {
+            sprintf(text, "%02d:%02d:%02d", m_rtc.Hour(), m_rtc.Minute(),
+                    m_rtc.Second());
+        } else {
+            sprintf(text, "%2d:%02d:%02d", m_rtc.Hour(), m_rtc.Minute(),
+                    m_rtc.Second());
+        }
+        int length = m_display.DrawText(m_marqueePos, text, m_currentColor) + 1;
+        if (m_marqueeMovement.Ms() > MARQUEE_DELAY_MS) {
+            m_marqueeMovement.Reset();
+            if (--m_marqueePos == -length) {
+                m_marqueePos = WIDTH;
+            }
+        }
+    }
+
+    void DrawBinary() {
+        m_display.Clear();
+        auto drawBinaryDigit = [&](int x, uint8_t value) {
+            uint32_t dimColor = Display::ScaleBrightness(m_currentColor, 0.2f);
+            m_display.DrawPixel(WIDTH * 0 + x + 2, value & 0b0001'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 0 + x + 3, value & 0b0001'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+
+            m_display.DrawPixel(WIDTH * 1 + x + 2, value & 0b0000'1000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 1 + x + 3, value & 0b0000'1000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 2 + x + 2, value & 0b0000'0100
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 2 + x + 3, value & 0b0000'0100
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 3 + x + 2, value & 0b0000'0010
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 3 + x + 3, value & 0b0000'0010
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 4 + x + 2, value & 0b0000'0001
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 4 + x + 3, value & 0b0000'0001
+                                                       ? m_currentColor
+                                                       : dimColor);
+            // 6th bit boiii
+            m_display.DrawPixel(WIDTH * 4 + x + 1, value & 0b0010'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 4 + x + 0, value & 0b0010'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+        };
+
+        drawBinaryDigit(0, m_rtc.Hour());
+        DrawSeparator(5, m_currentColor);
+        drawBinaryDigit(6, m_rtc.Minute());
+        DrawSeparator(12, m_currentColor);
+        drawBinaryDigit(13, m_rtc.Second());
+
+        if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
+            m_display.DrawPixel(WIDTH * 2 + 5, m_currentColor);
+            m_display.DrawPixel(WIDTH * 2 + 12, m_currentColor);
         }
     }
 
