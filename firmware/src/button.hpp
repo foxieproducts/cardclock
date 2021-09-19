@@ -85,14 +85,14 @@ class Button {
         if (digitalRead(PIN_BTN_RIGHT) == LOW) {
             return PIN_BTN_RIGHT;
         }
-        return 0;
+        return -1;
     }
 
     static int WaitForButtonPress(const int maxWaitMs = 0) {
         ElapsedTime wait;
         while (true) {
             int button = AreAnyButtonsPressed();
-            if (button != 0) {
+            if (button != -1) {
                 return button;
             }
 

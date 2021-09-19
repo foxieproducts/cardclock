@@ -186,10 +186,12 @@ class Display {
             // pressing a button will speed up a long blocking scrolling
             // message
             waitToScroll.Reset();
-            int adjustedDelay =
-                Button::AreAnyButtonsPressed() ? delayMs / 3 : delayMs;
+            int adjustedDelay = delayMs;
             while (waitToScroll.Ms() < adjustedDelay) {
                 Update(true);
+                adjustedDelay = Button::AreAnyButtonsPressed() != -1
+                                    ? delayMs / 3
+                                    : delayMs;
                 yield();
             }
             --i;
