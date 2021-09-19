@@ -348,7 +348,7 @@ class Clock : public Menu {
 
                 if (m_waitToAnimate.Ms() > 50) {
                     m_waitToAnimate.Reset();
-                    baseColor++;
+                    baseColor--;
                 }
                 if (num == 0) {
                     curColor = 0;
