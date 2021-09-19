@@ -8,7 +8,7 @@
 class Clock : public Menu {
   private:
     enum Mode_e {
-        MODE_ANIM_OFF,
+        MODE_NORMAL,
         MODE_SHIMMER,
         MODE_RAINBOW,
         MODE_MARQUEE,
@@ -23,7 +23,7 @@ class Clock : public Menu {
 
     Rtc& m_rtc;
 
-    int m_mode{(int)MODE_ANIM_OFF};
+    int m_mode{(int)MODE_NORMAL};
     bool m_shouldSaveSettings{false};
     ElapsedTime m_waitingToSaveSettings;
     ElapsedTime m_waitToAnimate;
@@ -54,7 +54,7 @@ class Clock : public Menu {
         } else {
             m_mode = m_settings[F("MODE")].as<int>();
             if (m_mode >= TOTAL_MODES) {
-                m_mode = MODE_ANIM_OFF;
+                m_mode = MODE_NORMAL;
             }
         }
 
@@ -72,7 +72,7 @@ class Clock : public Menu {
         }
 
         switch (m_mode) {
-            case MODE_ANIM_OFF:
+            case MODE_NORMAL:
             case MODE_SHIMMER:
             case MODE_RAINBOW:
                 DrawClockDigits(color);
@@ -126,7 +126,7 @@ class Clock : public Menu {
         if (evt == Button::PRESS) {
             // cycle through modes
             if (++m_mode == TOTAL_MODES) {
-                m_mode = MODE_ANIM_OFF;
+                m_mode = MODE_NORMAL;
             }
             m_settings[F("MODE")] = m_mode;
             m_waitingToSaveSettings.Reset();
@@ -147,8 +147,8 @@ class Clock : public Menu {
 
         String message;
         switch (m_mode) {
-            case MODE_ANIM_OFF:
-                message = F("ANIM OFF");
+            case MODE_NORMAL:
+                message = F("NORMAL");
                 break;
 
             case MODE_SHIMMER:
