@@ -265,39 +265,47 @@ class Clock : public Menu {
         m_display.Clear();
         auto drawBinaryDigit = [&](int x, uint8_t value) {
             uint32_t dimColor = Display::ScaleBrightness(m_currentColor, 0.2f);
+            m_display.DrawPixel(WIDTH * 0 + x + 1, value & 0b0001'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
             m_display.DrawPixel(WIDTH * 0 + x + 2, value & 0b0001'0000
                                                        ? m_currentColor
                                                        : dimColor);
-            m_display.DrawPixel(WIDTH * 0 + x + 3, value & 0b0001'0000
+            m_display.DrawPixel(WIDTH * 1 + x + 1, value & 0b0000'1000
                                                        ? m_currentColor
                                                        : dimColor);
-
             m_display.DrawPixel(WIDTH * 1 + x + 2, value & 0b0000'1000
                                                        ? m_currentColor
                                                        : dimColor);
-            m_display.DrawPixel(WIDTH * 1 + x + 3, value & 0b0000'1000
+            m_display.DrawPixel(WIDTH * 2 + x + 1, value & 0b0000'0100
                                                        ? m_currentColor
                                                        : dimColor);
             m_display.DrawPixel(WIDTH * 2 + x + 2, value & 0b0000'0100
                                                        ? m_currentColor
                                                        : dimColor);
-            m_display.DrawPixel(WIDTH * 2 + x + 3, value & 0b0000'0100
+            m_display.DrawPixel(WIDTH * 3 + x + 1, value & 0b0000'0010
                                                        ? m_currentColor
                                                        : dimColor);
             m_display.DrawPixel(WIDTH * 3 + x + 2, value & 0b0000'0010
                                                        ? m_currentColor
                                                        : dimColor);
-            m_display.DrawPixel(WIDTH * 3 + x + 3, value & 0b0000'0010
+            m_display.DrawPixel(WIDTH * 4 + x + 1, value & 0b0000'0001
                                                        ? m_currentColor
                                                        : dimColor);
             m_display.DrawPixel(WIDTH * 4 + x + 2, value & 0b0000'0001
                                                        ? m_currentColor
                                                        : dimColor);
-            m_display.DrawPixel(WIDTH * 4 + x + 3, value & 0b0000'0001
+            // 6th bit boiii
+            m_display.DrawPixel(WIDTH * 0 + x + 0, value & 0b0010'0000
                                                        ? m_currentColor
                                                        : dimColor);
-            // 6th bit boiii
-            m_display.DrawPixel(WIDTH * 4 + x + 1, value & 0b0010'0000
+            m_display.DrawPixel(WIDTH * 1 + x + 0, value & 0b0010'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 2 + x + 0, value & 0b0010'0000
+                                                       ? m_currentColor
+                                                       : dimColor);
+            m_display.DrawPixel(WIDTH * 3 + x + 0, value & 0b0010'0000
                                                        ? m_currentColor
                                                        : dimColor);
             m_display.DrawPixel(WIDTH * 4 + x + 0, value & 0b0010'0000
@@ -305,15 +313,15 @@ class Clock : public Menu {
                                                        : dimColor);
         };
 
-        drawBinaryDigit(0, m_rtc.Hour());
+        drawBinaryDigit(1, m_rtc.Hour());
         DrawSeparator(5, m_currentColor);
-        drawBinaryDigit(6, m_rtc.Minute());
-        DrawSeparator(12, m_currentColor);
+        drawBinaryDigit(7, m_rtc.Minute());
+        DrawSeparator(11, m_currentColor);
         drawBinaryDigit(13, m_rtc.Second());
 
         if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
             m_display.DrawPixel(WIDTH * 2 + 5, m_currentColor);
-            m_display.DrawPixel(WIDTH * 2 + 12, m_currentColor);
+            m_display.DrawPixel(WIDTH * 2 + 11, m_currentColor);
         }
     }
 
