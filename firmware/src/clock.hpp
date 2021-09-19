@@ -25,7 +25,7 @@ class Clock : public Menu {
     ElapsedTime m_waitToAnimate;
     ElapsedTime m_showingColorWheel;
 
-    uint8_t m_colorWheel{0};
+    uint8_t m_colorWheelPos{0};
     uint32_t m_currentColor{0};
     bool m_displayingColorWheel{false};
 
@@ -37,9 +37,9 @@ class Clock : public Menu {
         }
 
         if (!m_settings.containsKey(F("COLR"))) {
-            m_settings[F("COLR")] = m_colorWheel;
+            m_settings[F("COLR")] = m_colorWheelPos;
         } else {
-            m_colorWheel = m_settings[F("COLR")].as<uint32_t>();
+            m_colorWheelPos = m_settings[F("COLR")].as<uint32_t>();
         }
 
         if (!m_settings.containsKey(F("MODE"))) {
@@ -54,10 +54,10 @@ class Clock : public Menu {
     }
 
     virtual void Update() {
-        uint32_t color = Display::ColorWheel(m_colorWheel);
+        uint32_t color = Display::ColorWheel(m_colorWheelPos);
         m_currentColor = color;
 
-        if (m_displayingColorWheel && m_showingColorWheel.Ms() > 500) {
+        if (m_displayingColorWheel && m_showingColorWheel.Ms() > 750) {
             m_displayingColorWheel = false;
         }
 
@@ -80,8 +80,8 @@ class Clock : public Menu {
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
             // cycle through all colors
-            m_colorWheel -= 4;
-            m_settings[F("COLR")] = m_colorWheel;
+            m_colorWheelPos -= 4;
+            m_settings[F("COLR")] = m_colorWheelPos;
 
             m_displayingColorWheel = true;
             m_showingColorWheel.Reset();
@@ -182,7 +182,8 @@ class Clock : public Menu {
         }
 
         if (showMessage) {
-            m_display.DrawTextScrolling(message, m_currentColor, 50);
+            m_display.DrawTextScrolling(
+                message, Display::ColorWheel(m_colorWheelPos), 50);
         }
     }
 
@@ -215,7 +216,7 @@ class Clock : public Menu {
 
     void DrawAnalog(uint32_t color) {
         if (m_displayingColorWheel) {
-            uint8_t colorWheel = m_colorWheel - 128;
+            uint8_t colorWheel = m_colorWheelPos - 128;
             for (size_t i = 0; i < 12; ++i) {
                 uint32_t color = Display::ColorWheel(colorWheel);
                 colorWheel += 255 / 12;
