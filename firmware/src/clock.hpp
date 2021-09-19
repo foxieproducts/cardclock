@@ -334,7 +334,7 @@ class Clock : public Menu {
                 }
 
                 if (color != BLACK && num < WIDTH * HEIGHT) {
-                    if ((++pixelsChanged + jump) % 4 == 0) {
+                    if ((++pixelsChanged + jump) % 7 == 0) {
                         multiplier = m_waitToAnimate.Ms() / ANIM_TIME_MS;
                         if (m_waitToAnimate.Ms() < ANIM_TIME_MS / 2) {
                             multiplier = 1.0f - multiplier;
