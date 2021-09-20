@@ -244,15 +244,29 @@ class Clock : public Menu {
             m_display.ClearRoundLEDs(
                 m_settings[F("CLKB")] == F("ON") ? DARK_GRAY : BLACK);
 
-            uint32_t darkerColor =
-                Display::ScaleBrightness(m_currentColor, 0.5f);
-            if (m_display.IsAtMinimumBrightness()) {
-                darkerColor = BLACK;
+            uint32_t secondColor =
+                Display::ScaleBrightness(m_currentColor, 0.6f);
+            uint32_t hourAndMinuteColor = m_currentColor;
+
+            if (m_display.GetBrightness() < MIN_BRIGHTNESS_DEFAULT) {
+                // the red LEDs are the only ones still visible at low
+                // brightness with most smart LEDs, so since we can't be sure
+                // that the currentColor is anything brighter than DARK_GRAY
+                // (the analog clock background - CLKB), we can just inverse
+                // the clock face, lighting up every LED that isn't the current
+                // hour/minute/second position
+                m_display.ClearRoundLEDs(DARK_GRAY);
+
+                // now, turn off the LEDs to indicate time
+                secondColor = BLACK;
+                hourAndMinuteColor = BLACK;
             }
 
-            m_display.DrawSecondLEDs(m_rtc.Second(), darkerColor, true);
-            m_display.DrawHourLED(m_rtc.Hour(), m_currentColor);
-            m_display.DrawMinuteLED(m_rtc.Minute(), m_currentColor);
+            // the forceColor parameter is used here for the secondHand so that
+            // it doesn't flicker
+            m_display.DrawSecondLEDs(m_rtc.Second(), secondColor, true);
+            m_display.DrawHourLED(m_rtc.Hour(), hourAndMinuteColor);
+            m_display.DrawMinuteLED(m_rtc.Minute(), hourAndMinuteColor);
         }
     }
 

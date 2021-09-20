@@ -133,20 +133,21 @@ class Display {
     void Update(const bool force = false) {
         if (m_sinceLastLightSensorUpdate.Ms() > LIGHT_SENSOR_UPDATE_MS) {
             m_sinceLastLightSensorUpdate.Reset();
-            m_currentBrightness = m_lightSensor.Get();
+
+            const int minBrightness = m_settings[F("MINB")].as<int>();
+            const int maxBrightness = m_settings[F("MAXB")].as<int>();
+
+            m_currentBrightness =
+                map(m_lightSensor.Get(), LightSensor::MIN_SENSOR_VAL,
+                    LightSensor::MAX_SENSOR_VAL, minBrightness, maxBrightness);
         }
 
         if (m_sinceLastShow.Ms() > (1000 / FRAMES_PER_SECOND) || force) {
             m_sinceLastShow.Reset();
 
-            int minBrightness = m_settings[F("MINB")].as<int>();
-            int maxBrightness = m_settings[F("MAXB")].as<int>();
-
             if (m_currentBrightness != m_lastBrightness) {
+                SetBrightness(m_currentBrightness);
                 m_lastBrightness = m_currentBrightness;
-                SetBrightness(map(
-                    m_currentBrightness, LightSensor::MIN_SENSOR_VAL,
-                    LightSensor::MAX_SENSOR_VAL, minBrightness, maxBrightness));
             }
             Show();
         }
