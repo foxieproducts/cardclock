@@ -123,7 +123,7 @@ class ConfigMenu : public Menu {
 
     virtual bool Left(const Button::Event_e evt) override {
         if (evt == Button::PRESS) {
-            m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
+            m_display.ScrollHorizontal(WIDTH, SCROLL_RIGHT);
             if (m_selectedOption >= 0) {
                 m_options[m_selectedOption]->Finish();
                 m_selectedOption = -1;
@@ -138,7 +138,7 @@ class ConfigMenu : public Menu {
     virtual bool Right(const Button::Event_e evt) override {
         if (evt == Button::PRESS) {
             if (m_selectedOption == -1) {
-                m_display.ScrollHorizontal(WIDTH, SCROLL_RIGHT);
+                m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
                 m_selectedOption = m_displayedOption;
                 m_options[m_selectedOption]->Begin();
             }
