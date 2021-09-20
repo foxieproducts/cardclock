@@ -89,6 +89,7 @@ class Button {
     }
 
     static int WaitForButtonPress(const size_t maxWaitMs = 10000) {
+        WaitForNoButtons();
         ElapsedTime wait;
         while (true) {
             int button = AreAnyButtonsPressed();

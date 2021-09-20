@@ -107,7 +107,7 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
         display.DrawText(0, F("CLR?"), ORANGE);
         display.DrawChar(14, CHAR_RIGHT_ARROW, GREEN);
         display.Show();
-        Button::WaitForNoButtons();
+
         if (Button::WaitForButtonPress() == PIN_BTN_RIGHT) {
             display.DrawTextScrolling(F("SETTINGS CLEARED"), PURPLE);
             settings.clear();
