@@ -46,7 +46,10 @@ class Clock : public Menu {
 
     virtual void Update() {
         uint32_t color = Display::ColorWheel(m_colorWheelPos);
-        if (m_display.IsAtMinimumBrightness()) {
+        if (m_display.GetBrightness() < MIN_BRIGHTNESS_DEFAULT) {
+            // if the user wants things really dim, we can do that. but we still
+            // need the config menu and time menus to work properly, so we dim
+            // via this method
             color = Display::ScaleBrightness(color, 0.6f);
         }
 
