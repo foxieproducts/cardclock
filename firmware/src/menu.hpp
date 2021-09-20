@@ -115,6 +115,7 @@ class MenuManager {
                 }
                 ActivateMenu(m_activeMenu - 1);
             }
+            m_menus[m_activeMenu]->ResetTimeSinceButtonPress();
         };
 
         m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
@@ -125,6 +126,7 @@ class MenuManager {
                 }
                 ActivateMenu(m_activeMenu + 1);
             }
+            m_menus[m_activeMenu]->ResetTimeSinceButtonPress();
         };
     }
 };

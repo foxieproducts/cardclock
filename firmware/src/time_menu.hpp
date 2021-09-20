@@ -42,10 +42,7 @@ class TimeMenu : public Menu {
         m_secondsChanged = false;
     }
 
-    virtual void Timeout() {
-        SetRTCIfTimeChanged();
-        m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
-    }
+    virtual void Timeout() { SetRTCIfTimeChanged(); }
 
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
