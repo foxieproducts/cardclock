@@ -112,6 +112,8 @@ class Clock : public Menu {
     virtual void Activate() override { SetMode(false); }
     virtual void Hide() override { m_display.GetPixels().clearColorOverride(); }
 
+    virtual bool ShouldTimeout() override { return false; }
+
   private:
     void SetMode(const bool showMessage = true) {
         m_display.GetPixels().clearColorOverride();

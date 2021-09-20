@@ -42,6 +42,11 @@ class TimeMenu : public Menu {
         m_secondsChanged = false;
     }
 
+    virtual void Timeout() {
+        SetRTCIfTimeChanged();
+        m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
+    }
+
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
             m_timeChanged = true;
@@ -102,7 +107,7 @@ class TimeMenu : public Menu {
             } else if (m_mode == SET_MINUTE) {
                 m_mode = SET_HOUR;
             } else if (m_mode == SET_SECOND) {
-                m_display.ScrollHorizontal(9, 1);
+                m_display.ScrollHorizontal(9, SCROLL_RIGHT);
                 m_mode = SET_MINUTE;
             }
         }
@@ -114,10 +119,10 @@ class TimeMenu : public Menu {
             if (m_mode == SET_HOUR) {
                 m_mode = SET_MINUTE;
             } else if (m_mode == SET_MINUTE) {
-                m_display.ScrollHorizontal(9, -1);
+                m_display.ScrollHorizontal(9, SCROLL_LEFT);
                 m_mode = SET_SECOND;
             } else if (m_mode == SET_SECOND) {
-                m_display.ScrollHorizontal(9, 1);
+                m_display.ScrollHorizontal(9, SCROLL_RIGHT);
                 DrawTime();
                 SetRTCIfTimeChanged();
                 // exit the settings menu, MenuManager treats this as

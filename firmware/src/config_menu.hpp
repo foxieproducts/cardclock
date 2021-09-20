@@ -9,10 +9,14 @@
 
 class ConfigMenu : public Menu {
   protected:
+    enum {
+        NOT_SELECTED = -1,
+    };
+
     std::vector<std::shared_ptr<Option>> m_options;
     size_t m_displayedOption{0};
-    int m_selectedOption{-1};
-    ElapsedTime m_delayBeforeRightArrow;
+    int m_selectedOption{NOT_SELECTED};
+    ElapsedTime m_sinceStartedShowingOption;
 
   public:
     ConfigMenu(Display& display, Settings& settings)
@@ -54,7 +58,7 @@ class ConfigMenu : public Menu {
 
             if (m_options[m_selectedOption]->IsDone()) {
                 m_options[m_selectedOption]->Finish();
-                m_selectedOption = -1;
+                m_selectedOption = NOT_SELECTED;
             }
         } else {
             ShowCurrentOptionName();
@@ -65,9 +69,9 @@ class ConfigMenu : public Menu {
         m_display.DrawText(
             0, m_options[m_displayedOption]->GetName().substring(0, 4), GRAY);
 
-        if (m_delayBeforeRightArrow.Ms() > 1000) {
+        if (m_sinceStartedShowingOption.Ms() > 1000) {
             m_display.DrawChar(14, CHAR_RIGHT_ARROW, GREEN);
-        } else if (m_delayBeforeRightArrow.Ms() > 500) {
+        } else if (m_sinceStartedShowingOption.Ms() > 500) {
             m_display.DrawChar(15, CHAR_RIGHT_ARROW, GREEN);
         }
     }
@@ -85,8 +89,16 @@ class ConfigMenu : public Menu {
     }
 
     virtual void Activate() override {
-        m_display.ScrollHorizontal(WIDTH, -1);
-        m_delayBeforeRightArrow.Reset();
+        m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
+        m_sinceStartedShowingOption.Reset();
+    }
+
+    virtual void Timeout() override {
+        if (m_selectedOption != NOT_SELECTED) {
+            m_options[m_selectedOption]->Finish();
+            m_selectedOption = NOT_SELECTED;
+        }
+        m_display.ScrollHorizontal(WIDTH, SCROLL_RIGHT);
     }
 
     virtual bool Up(const Button::Event_e evt) override {
@@ -99,7 +111,7 @@ class ConfigMenu : public Menu {
                 }
 
                 m_display.ScrollVertical(HEIGHT, SCROLL_DOWN);
-                m_delayBeforeRightArrow.Reset();
+                m_sinceStartedShowingOption.Reset();
             }
         }
         return true;
@@ -115,7 +127,7 @@ class ConfigMenu : public Menu {
                 }
 
                 m_display.ScrollVertical(HEIGHT, SCROLL_UP);
-                m_delayBeforeRightArrow.Reset();
+                m_sinceStartedShowingOption.Reset();
             }
         }
         return true;
@@ -126,7 +138,8 @@ class ConfigMenu : public Menu {
             m_display.ScrollHorizontal(WIDTH, SCROLL_RIGHT);
             if (m_selectedOption >= 0) {
                 m_options[m_selectedOption]->Finish();
-                m_selectedOption = -1;
+                m_selectedOption = NOT_SELECTED;
+                m_sinceStartedShowingOption.Reset();
                 return true;
             }
         }
@@ -137,7 +150,7 @@ class ConfigMenu : public Menu {
 
     virtual bool Right(const Button::Event_e evt) override {
         if (evt == Button::PRESS) {
-            if (m_selectedOption == -1) {
+            if (m_selectedOption == NOT_SELECTED) {
                 m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
                 m_selectedOption = m_displayedOption;
                 m_options[m_selectedOption]->Begin();
