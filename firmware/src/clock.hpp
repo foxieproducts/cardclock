@@ -27,8 +27,8 @@ class Clock : public Menu {
     int m_mode{(int)MODE_NORMAL};
     bool m_shouldSaveSettings{false};
     ElapsedTime m_waitingToSaveSettings;
-    ElapsedTime m_waitToAnimate;
-    ElapsedTime m_showingColorWheel;
+    ElapsedTime m_sinceLastAnimation;
+    ElapsedTime m_sinceStartedColorWheel;
     ElapsedTime m_marqueeMovement;
 
     uint8_t m_colorWheelPos{0};
@@ -47,7 +47,7 @@ class Clock : public Menu {
         uint32_t color = Display::ColorWheel(m_colorWheelPos);
         m_currentColor = color;
 
-        if (m_displayingColorWheel && m_showingColorWheel.Ms() > 750) {
+        if (m_displayingColorWheel && m_sinceStartedColorWheel.Ms() > 750) {
             m_displayingColorWheel = false;
         }
 
@@ -72,26 +72,20 @@ class Clock : public Menu {
                 break;
         }
 
-        if (m_shouldSaveSettings && m_waitingToSaveSettings.Ms() >= 2000) {
-            m_settings.Save();
-            m_shouldSaveSettings = false;
-        }
-
         DrawAnalog(color);
+
+        CheckIfWaitingToSaveSettings();
     }
 
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
-            // cycle through all colors
+            // cycle through all the colors on the color wheel, red->blue->green
             m_colorWheelPos -= 4;
             m_settings[F("COLR")] = m_colorWheelPos;
 
             m_displayingColorWheel = true;
-            m_showingColorWheel.Reset();
-            // wait to save the setting until the user has stopped changing
-            // the color for a few seconds
-            m_waitingToSaveSettings.Reset();
-            m_shouldSaveSettings = true;
+            m_sinceStartedColorWheel.Reset();
+            PrepareToSaveSettings();
         }
         return true;
     }
@@ -103,8 +97,7 @@ class Clock : public Menu {
                 m_mode = MODE_NORMAL;
             }
             m_settings[F("MODE")] = m_mode;
-            m_waitingToSaveSettings.Reset();
-            m_shouldSaveSettings = true;
+            PrepareToSaveSettings();
 
             SetMode();
         }
@@ -167,20 +160,7 @@ class Clock : public Menu {
     void DrawNormal() {
         DrawClockDigits(m_currentColor);
         DrawSeparator(8, m_currentColor);
-        if (m_settings[F("WLED")] == F("ON")) {
-            if (WiFi.isConnected()) {
-                // it's fitting that 42 is exactly the right place for
-                // the WiFi status LED, and for that, we'll call setPixelColor
-                // directly.
-                m_display.GetLEDs().setPixelColor(42, m_currentColor);
-            } else {
-                if ((m_rtc.Millis() > 300 && m_rtc.Millis() < 400) ||
-                    (m_rtc.Millis() > 500 && m_rtc.Millis() < 600)) {
-                    m_display.GetLEDs().setPixelColor(
-                        42, Display::ScaleBrightness(m_currentColor, 0.5f));
-                }
-            }
-        }
+        DrawWiFiStatus();
     }
 
     void DrawClockDigits(uint32_t color) {
@@ -247,60 +227,63 @@ class Clock : public Menu {
 
     void DrawBinary() {
         m_display.Clear();
-
         DrawBinaryDigit(1, m_rtc.Hour());
         DrawSeparator(5, m_currentColor);
         DrawBinaryDigit(7, m_rtc.Minute());
         DrawSeparator(11, m_currentColor);
         DrawBinaryDigit(13, m_rtc.Second());
-
-        if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
-            m_display.DrawPixel(5, 2, m_currentColor);
-            m_display.DrawPixel(11, 2, m_currentColor);
-        }
+        DrawWiFiStatus();
     }
 
     void DrawBinaryDigit(int x, uint8_t value) {
         uint32_t onCol = m_currentColor;
         uint32_t offCol = Display::ScaleBrightness(m_currentColor, 0.2f);
-        m_display.DrawPixel(x + 1, 0, value & 0b0001'0000 ? onCol : offCol);
-        m_display.DrawPixel(x + 2, 0, value & 0b0001'0000 ? onCol : offCol);
-        m_display.DrawPixel(x + 1, 1, value & 0b0000'1000 ? onCol : offCol);
-        m_display.DrawPixel(x + 2, 1, value & 0b0000'1000 ? onCol : offCol);
-        m_display.DrawPixel(x + 1, 2, value & 0b0000'0100 ? onCol : offCol);
-        m_display.DrawPixel(x + 2, 2, value & 0b0000'0100 ? onCol : offCol);
-        m_display.DrawPixel(x + 1, 3, value & 0b0000'0010 ? onCol : offCol);
-        m_display.DrawPixel(x + 2, 3, value & 0b0000'0010 ? onCol : offCol);
-        m_display.DrawPixel(x + 1, 4, value & 0b0000'0001 ? onCol : offCol);
-        m_display.DrawPixel(x + 2, 4, value & 0b0000'0001 ? onCol : offCol);
-        // 6th bit boiii
+        // 6th bit
         m_display.DrawPixel(x + 0, 0, value & 0b0010'0000 ? onCol : offCol);
         m_display.DrawPixel(x + 0, 1, value & 0b0010'0000 ? onCol : offCol);
         m_display.DrawPixel(x + 0, 2, value & 0b0010'0000 ? onCol : offCol);
         m_display.DrawPixel(x + 0, 3, value & 0b0010'0000 ? onCol : offCol);
         m_display.DrawPixel(x + 0, 4, value & 0b0010'0000 ? onCol : offCol);
+        // 5th bit
+        m_display.DrawPixel(x + 1, 0, value & 0b0001'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 0, value & 0b0001'0000 ? onCol : offCol);
+        // 4th bit
+        m_display.DrawPixel(x + 1, 1, value & 0b0000'1000 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 1, value & 0b0000'1000 ? onCol : offCol);
+        // 3rd bit
+        m_display.DrawPixel(x + 1, 2, value & 0b0000'0100 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 2, value & 0b0000'0100 ? onCol : offCol);
+        // 2nd bit
+        m_display.DrawPixel(x + 1, 3, value & 0b0000'0010 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 3, value & 0b0000'0010 ? onCol : offCol);
+        // 1st bit
+        m_display.DrawPixel(x + 1, 4, value & 0b0000'0001 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 4, value & 0b0000'0001 ? onCol : offCol);
     };
 
     void AddShimmerEffect() {
         m_display.GetLEDs().setColorOverride(
-            [&](uint16_t num, uint32_t& color) {
+            [&](uint16_t pixelNum, uint32_t& color) {
                 static uint8_t jump = 0;
                 static int pixelsChanged = 0;
                 static float multiplier = 1.0f;
-                const float ANIM_TIME_MS = 600.0f;
-                if (m_waitToAnimate.Ms() > ANIM_TIME_MS) {
-                    m_waitToAnimate.Reset();
+
+                // stop, it's
+                const float SHIMMER_TIME = 600.0f;
+
+                if (m_sinceLastAnimation.Ms() > SHIMMER_TIME) {
+                    m_sinceLastAnimation.Reset();
                     jump--;
                 }
 
-                if (num == 0) {
+                if (pixelNum == 0) {
                     pixelsChanged = 0;
                 }
 
-                if (color != BLACK && num < WIDTH * HEIGHT) {
+                if (color != BLACK && pixelNum < WIDTH * HEIGHT) {
                     if ((++pixelsChanged + jump) % 7 == 0) {
-                        multiplier = m_waitToAnimate.Ms() / ANIM_TIME_MS;
-                        if (m_waitToAnimate.Ms() < ANIM_TIME_MS / 2) {
+                        multiplier = m_sinceLastAnimation.Ms() / SHIMMER_TIME;
+                        if (m_sinceLastAnimation.Ms() < SHIMMER_TIME / 2) {
                             multiplier = 1.0f - multiplier;
                         }
 
@@ -313,15 +296,16 @@ class Clock : public Menu {
 
     void AddRainbowEffect() {
         m_display.GetLEDs().setColorOverride(
-            [&](uint16_t num, uint32_t& color) {
+            [&](uint16_t pixelNum, uint32_t& color) {
                 static uint8_t baseColor = 128;
                 static uint8_t curColor = 0;
 
-                if (m_waitToAnimate.Ms() > 50) {
-                    m_waitToAnimate.Reset();
+                if (m_sinceLastAnimation.Ms() > 50) {
+                    m_sinceLastAnimation.Reset();
                     baseColor--;
                 }
-                if (num == 0) {
+
+                if (pixelNum == 0) {
                     curColor = 0;
                 }
 
@@ -356,6 +340,49 @@ class Clock : public Menu {
 
         if (!m_settings.containsKey(F("CLKB"))) {
             m_settings[F("CLKB")] = F("ON");
+        }
+    }
+
+    void DrawWiFiStatus() {
+        if (m_settings[F("WLED")] == F("ON")) {
+            if (WiFi.isConnected()) {
+                if (m_mode < MODE_BINARY) {
+                    // it's fitting that 42 is exactly the right place for
+                    // the WiFi status LED, and for that, we'll call
+                    // setPixelColor directly.
+                    m_display.GetLEDs().setPixelColor(42, m_currentColor);
+                } else {
+                    m_display.DrawPixel(5, 2, m_currentColor);
+                    m_display.DrawPixel(11, 2, m_currentColor);
+                }
+            } else {
+                if ((m_rtc.Millis() > 300 && m_rtc.Millis() < 400) ||
+                    (m_rtc.Millis() > 500 && m_rtc.Millis() < 600)) {
+                    uint32_t heartBeatColor =
+                        Display::ScaleBrightness(m_currentColor, 0.5f);
+                    if (m_mode < MODE_BINARY) {
+                        m_display.GetLEDs().setPixelColor(42, heartBeatColor);
+                    } else {
+                        m_display.DrawPixel(5, 2, heartBeatColor);
+                        m_display.DrawPixel(11, 2, heartBeatColor);
+                    }
+                }
+            }
+        }
+    }
+
+    void PrepareToSaveSettings() {
+        m_shouldSaveSettings = true;
+        m_waitingToSaveSettings.Reset();
+    }
+
+    void CheckIfWaitingToSaveSettings() {
+        if (m_shouldSaveSettings && m_waitingToSaveSettings.Ms() >= 2000) {
+            // wait until 2 seconds after changing the color or mode to save
+            // settings, since the user can quickly change either one and we
+            // want to save flash write cycles
+            m_settings.Save();
+            m_shouldSaveSettings = false;
         }
     }
 };
