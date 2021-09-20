@@ -45,7 +45,7 @@ class Rtc {
     int Hour12() { return Conv24to12(m_rtc.getHour()); }
     int Minute() { return m_rtc.getMinute(); }
     int Second() { return m_rtc.getSecond(); }
-    int Millis() { return millis() - m_millisAtInterrupt; }
+    int Millis() { return (millis() - m_millisAtInterrupt) % 1000; }
     void SetTime(uint8_t hour, uint8_t minute, uint8_t second) {
         m_rtc.setTime(hour, minute, second);
         m_millisAtInterrupt = millis();
