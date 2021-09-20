@@ -61,9 +61,9 @@ class ConfigMenu : public Menu {
             0, m_options[m_menuOption]->GetName().substring(0, 4), GRAY);
 
         if (m_delayBeforeGreenArrow.Ms() > 1000) {
-            m_display.DrawChar(15, 101, GREEN);
-        } else if (m_delayBeforeGreenArrow.Ms() > 500) {
             m_display.DrawChar(14, 101, GREEN);
+        } else if (m_delayBeforeGreenArrow.Ms() > 500) {
+            m_display.DrawChar(15, 101, GREEN);
         }
     }
 
