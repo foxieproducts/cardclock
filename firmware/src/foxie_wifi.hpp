@@ -12,6 +12,10 @@
 
 class FoxieWiFi {
   private:
+    enum {
+        WAIT_TO_INIT_MS = 2000,
+    };
+
     Settings& m_settings;
     Display& m_display;
 
@@ -21,6 +25,8 @@ class FoxieWiFi {
 
     bool m_isInitialized{false};
     bool m_isOTAInitialized{false};
+
+    ElapsedTime m_waitToInitialize;
 
   public:
     FoxieWiFi(Settings& settings, Display& display)
@@ -101,7 +107,8 @@ class FoxieWiFi {
     }
 
     void Initialize() {
-        if (!m_isInitialized && m_settings[F("WIFI")] != F("OFF")) {
+        if (m_waitToInitialize.Ms() > WAIT_TO_INIT_MS && !m_isInitialized &&
+            m_settings[F("WIFI")] != F("OFF")) {
             WiFi.begin();
             WiFi.persistent(true);
             m_isInitialized = true;
@@ -125,8 +132,8 @@ class FoxieWiFi {
             m_display.Show();
         });
         ArduinoOTA.onProgress([&](unsigned int progress, unsigned int total) {
-            m_display.DrawPixel(FIRST_HOUR_LED + map(progress, 0, total, 0, 11),
-                                PURPLE);
+            m_display.DrawInsideRingPixel(map(progress, 0, total, 0, 11),
+                                          PURPLE);
             m_display.Clear();
             m_display.DrawTextCentered(
                 String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);

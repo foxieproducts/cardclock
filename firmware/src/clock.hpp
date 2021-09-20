@@ -19,7 +19,7 @@ class Clock : public Menu {
     };
 
     enum {
-        MARQUEE_DELAY_MS = 150,
+        MARQUEE_DELAY_MS = 125,
     };
 
     Rtc& m_rtc;
@@ -40,28 +40,7 @@ class Clock : public Menu {
   public:
     Clock(Display& display, Rtc& rtc, Settings& settings)
         : Menu(display, settings), m_rtc(rtc) {
-        if (!m_settings.containsKey(F("WLED"))) {
-            m_settings[F("WLED")] = F("ON");
-        }
-
-        if (!m_settings.containsKey(F("COLR"))) {
-            m_settings[F("COLR")] = m_colorWheelPos;
-        } else {
-            m_colorWheelPos = m_settings[F("COLR")].as<uint32_t>();
-        }
-
-        if (!m_settings.containsKey(F("MODE"))) {
-            m_settings[F("MODE")] = m_mode;
-        } else {
-            m_mode = m_settings[F("MODE")].as<int>();
-            if (m_mode >= TOTAL_MODES) {
-                m_mode = MODE_NORMAL;
-            }
-        }
-
-        if (!m_settings.containsKey(F("CLKB"))) {
-            m_settings[F("CLKB")] = F("ON");
-        }
+        LoadSettings();
     }
 
     virtual void Update() {
@@ -76,14 +55,7 @@ class Clock : public Menu {
             case MODE_NORMAL:
             case MODE_SHIMMER:
             case MODE_RAINBOW:
-                DrawClockDigits(color);
-                DrawSeparator(8, color);
-
-                if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
-                    // it's fitting that 42 is exactly the right place for
-                    // the WiFi status LED.
-                    m_display.DrawPixel(42, color);
-                }
+                DrawNormal();
                 break;
 
             case MODE_MARQUEE:
@@ -192,6 +164,25 @@ class Clock : public Menu {
         }
     }
 
+    void DrawNormal() {
+        DrawClockDigits(m_currentColor);
+        DrawSeparator(8, m_currentColor);
+        if (m_settings[F("WLED")] == F("ON")) {
+            if (WiFi.isConnected()) {
+                // it's fitting that 42 is exactly the right place for
+                // the WiFi status LED, and for that, we'll call setPixelColor
+                // directly.
+                m_display.GetLEDs().setPixelColor(42, m_currentColor);
+            } else {
+                if ((m_rtc.Millis() > 300 && m_rtc.Millis() < 400) ||
+                    (m_rtc.Millis() > 500 && m_rtc.Millis() < 600)) {
+                    m_display.GetLEDs().setPixelColor(
+                        42, Display::ScaleBrightness(m_currentColor, 0.5f));
+                }
+            }
+        }
+    }
+
     void DrawClockDigits(uint32_t color) {
         if (m_display.IsAtMinimumBrightness()) {
             color = Display::ScaleBrightness(color, 0.6f);
@@ -210,33 +201,26 @@ class Clock : public Menu {
         m_display.DrawText(10, text, color);
     }
 
-    void DrawSeparator(int pos, uint32_t color) {
+    void DrawSeparator(int x, uint32_t color) {
         const float ms = m_rtc.Millis() / 1000.0f;
         const int transitionColor = Display::ScaleBrightness(
             m_currentColor,
             0.2f + (m_rtc.Second() % 2 ? ms : 1.0f - ms) * 0.8f);
 
         // force the pixels to be drawn in the edited color
-        m_display.DrawPixel(WIDTH * 1 + pos, transitionColor, true);
-        m_display.DrawPixel(WIDTH * 3 + pos, transitionColor, true);
+        m_display.DrawPixel(x, 1, transitionColor, true);
+        m_display.DrawPixel(x, 3, transitionColor, true);
     }
 
     void DrawAnalog(uint32_t color) {
         if (m_displayingColorWheel) {
-            uint8_t colorWheel = m_colorWheelPos - 128;
-            for (size_t i = 0; i < 12; ++i) {
-                uint32_t color = Display::ColorWheel(colorWheel);
-                colorWheel += 255 / 12;
-                m_display.DrawPixel(FIRST_MINUTE_LED + i, color);
-                m_display.DrawPixel(FIRST_HOUR_LED + i, color);
-            }
+            m_display.DrawColorWheel(m_colorWheelPos);
         } else {
             m_display.ClearRoundLEDs(
                 m_settings[F("CLKB")] == F("ON") ? DARK_GRAY : BLACK);
 
-            m_display.DrawSecondLEDs(
-                m_rtc.Second(), Display::ScaleBrightness(m_currentColor, 0.4f),
-                true);
+            auto secondColor = Display::ScaleBrightness(m_currentColor, 0.4f);
+            m_display.DrawSecondLEDs(m_rtc.Second(), secondColor, true);
             m_display.DrawHourLED(m_rtc.Hour(), m_currentColor);
             m_display.DrawMinuteLED(m_rtc.Minute(), m_currentColor);
         }
@@ -263,67 +247,39 @@ class Clock : public Menu {
 
     void DrawBinary() {
         m_display.Clear();
-        auto drawBinaryDigit = [&](int x, uint8_t value) {
-            uint32_t dimColor = Display::ScaleBrightness(m_currentColor, 0.2f);
-            m_display.DrawPixel(WIDTH * 0 + x + 1, value & 0b0001'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 0 + x + 2, value & 0b0001'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 1 + x + 1, value & 0b0000'1000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 1 + x + 2, value & 0b0000'1000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 2 + x + 1, value & 0b0000'0100
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 2 + x + 2, value & 0b0000'0100
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 3 + x + 1, value & 0b0000'0010
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 3 + x + 2, value & 0b0000'0010
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 4 + x + 1, value & 0b0000'0001
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 4 + x + 2, value & 0b0000'0001
-                                                       ? m_currentColor
-                                                       : dimColor);
-            // 6th bit boiii
-            m_display.DrawPixel(WIDTH * 0 + x + 0, value & 0b0010'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 1 + x + 0, value & 0b0010'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 2 + x + 0, value & 0b0010'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 3 + x + 0, value & 0b0010'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-            m_display.DrawPixel(WIDTH * 4 + x + 0, value & 0b0010'0000
-                                                       ? m_currentColor
-                                                       : dimColor);
-        };
 
-        drawBinaryDigit(1, m_rtc.Hour());
+        DrawBinaryDigit(1, m_rtc.Hour());
         DrawSeparator(5, m_currentColor);
-        drawBinaryDigit(7, m_rtc.Minute());
+        DrawBinaryDigit(7, m_rtc.Minute());
         DrawSeparator(11, m_currentColor);
-        drawBinaryDigit(13, m_rtc.Second());
+        DrawBinaryDigit(13, m_rtc.Second());
 
         if (WiFi.isConnected() && m_settings[F("WLED")] == F("ON")) {
-            m_display.DrawPixel(WIDTH * 2 + 5, m_currentColor);
-            m_display.DrawPixel(WIDTH * 2 + 11, m_currentColor);
+            m_display.DrawPixel(5, 2, m_currentColor);
+            m_display.DrawPixel(11, 2, m_currentColor);
         }
     }
+
+    void DrawBinaryDigit(int x, uint8_t value) {
+        uint32_t onCol = m_currentColor;
+        uint32_t offCol = Display::ScaleBrightness(m_currentColor, 0.2f);
+        m_display.DrawPixel(x + 1, 0, value & 0b0001'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 0, value & 0b0001'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 1, 1, value & 0b0000'1000 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 1, value & 0b0000'1000 ? onCol : offCol);
+        m_display.DrawPixel(x + 1, 2, value & 0b0000'0100 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 2, value & 0b0000'0100 ? onCol : offCol);
+        m_display.DrawPixel(x + 1, 3, value & 0b0000'0010 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 3, value & 0b0000'0010 ? onCol : offCol);
+        m_display.DrawPixel(x + 1, 4, value & 0b0000'0001 ? onCol : offCol);
+        m_display.DrawPixel(x + 2, 4, value & 0b0000'0001 ? onCol : offCol);
+        // 6th bit boiii
+        m_display.DrawPixel(x + 0, 0, value & 0b0010'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 0, 1, value & 0b0010'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 0, 2, value & 0b0010'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 0, 3, value & 0b0010'0000 ? onCol : offCol);
+        m_display.DrawPixel(x + 0, 4, value & 0b0010'0000 ? onCol : offCol);
+    };
 
     void AddShimmerEffect() {
         m_display.GetLEDs().setColorOverride(
@@ -376,5 +332,30 @@ class Clock : public Menu {
                         Display::ColorWheel(baseColor + curColor);
                 }
             });
+    }
+
+    void LoadSettings() {
+        if (!m_settings.containsKey(F("WLED"))) {
+            m_settings[F("WLED")] = F("ON");
+        }
+
+        if (!m_settings.containsKey(F("COLR"))) {
+            m_settings[F("COLR")] = m_colorWheelPos;
+        } else {
+            m_colorWheelPos = m_settings[F("COLR")].as<uint32_t>();
+        }
+
+        if (!m_settings.containsKey(F("MODE"))) {
+            m_settings[F("MODE")] = m_mode;
+        } else {
+            m_mode = m_settings[F("MODE")].as<int>();
+            if (m_mode >= TOTAL_MODES) {
+                m_mode = MODE_NORMAL;
+            }
+        }
+
+        if (!m_settings.containsKey(F("CLKB"))) {
+            m_settings[F("CLKB")] = F("ON");
+        }
     }
 };

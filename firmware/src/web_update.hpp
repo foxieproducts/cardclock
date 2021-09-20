@@ -48,8 +48,8 @@ class WebUpdate {
         });
         ESPhttpUpdate.onProgress(
             [&](unsigned int progress, unsigned int total) {
-                m_display.DrawPixel(
-                    FIRST_HOUR_LED + map(progress, 0, total, 0, 11), PURPLE);
+                m_display.DrawInsideRingPixel(map(progress, 0, total, 0, 11),
+                                              PURPLE);
                 m_display.Clear();
                 m_display.DrawTextCentered(
                     String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);

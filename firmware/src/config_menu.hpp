@@ -12,6 +12,7 @@ class ConfigMenu : public Menu {
     std::vector<std::shared_ptr<Option>> m_options;
     size_t m_menuOption{0};
     int m_selectedMenuOption{-1};
+    ElapsedTime m_delayBeforeGreenArrow;
 
   public:
     ConfigMenu(Display& display, Settings& settings)
@@ -59,10 +60,11 @@ class ConfigMenu : public Menu {
         m_display.DrawText(
             0, m_options[m_menuOption]->GetName().substring(0, 4), GRAY);
 
-        // m_display.DrawPixel(32, GREEN);
-        // m_display.DrawPixel(49, GREEN);
-        m_display.DrawPixel(50, GREEN);
-        // m_display.DrawPixel(66, GREEN);
+        if (m_delayBeforeGreenArrow.Ms() > 1000) {
+            m_display.DrawChar(15, 101, GREEN);
+        } else if (m_delayBeforeGreenArrow.Ms() > 500) {
+            m_display.DrawChar(14, 101, GREEN);
+        }
     }
 
     void ShowMenuOptionPositionOnHours() {
@@ -77,7 +79,10 @@ class ConfigMenu : public Menu {
         m_display.DrawHourLED(m_menuOption + 1, GREEN);
     }
 
-    virtual void Activate() { m_display.ScrollHorizontal(WIDTH, -1); }
+    virtual void Activate() {
+        m_display.ScrollHorizontal(WIDTH, -1);
+        m_delayBeforeGreenArrow.Reset();
+    }
 
     virtual bool Up(const Button::Event_e evt) {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
@@ -89,6 +94,7 @@ class ConfigMenu : public Menu {
                 }
 
                 m_display.ScrollVertical(HEIGHT, 1);
+                m_delayBeforeGreenArrow.Reset();
             }
         }
         return true;
@@ -104,6 +110,7 @@ class ConfigMenu : public Menu {
                 }
 
                 m_display.ScrollVertical(HEIGHT, -1);
+                m_delayBeforeGreenArrow.Reset();
             }
         }
         return true;

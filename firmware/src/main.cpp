@@ -102,10 +102,18 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
 
     // if up button is held on boot, clear settings.
     if (digitalRead(PIN_BTN_UP) == LOW) {
-        display.DrawTextScrolling(F("SETTINGS CLEARED"), PURPLE);
-        settings.clear();
-        settings.Save();
-        ESP.eraseConfig();
+        display.SetBrightness(20);
+        display.DrawText(0, F("CLR?"), ORANGE);
+        display.DrawChar(14, 101, GREEN);
+        display.Show();
+        Button::WaitForNoButtons();
+        if (Button::WaitForButtonPress() == PIN_BTN_RIGHT) {
+            display.DrawTextScrolling(F("SETTINGS CLEARED"), PURPLE);
+            settings.clear();
+            settings.Save();
+            ESP.eraseConfig();
+        }
+        Button::WaitForNoButtons();
     }
 }
 

@@ -66,6 +66,10 @@ class Display {
             if (m_colorOverrideFunc && !forceColor) {
                 m_colorOverrideFunc(num, color);
             }
+            if (num >= TOTAL_LEDS) {
+                return;
+            }
+
             m_pixels[num] = color;
             ((Adafruit_NeoPixel*)this)->setPixelColor(num, color);
         }
@@ -156,10 +160,26 @@ class Display {
         }
     }
 
-    void DrawPixel(const int num,
+    /* forceColor will ignore the colorOverrideFunc (shimmer/rainbow effect) */
+    void DrawPixel(const int x,
+                   const int y,
                    const uint32_t color,
                    bool forceColor = false) {
-        m_leds.setPixelColor(num, color, forceColor);
+        m_leds.setPixelColor(y * WIDTH + x, color, forceColor);
+    }
+
+    // if pos == 0 then LED is at the 1:00 position
+    void DrawInsideRingPixel(const int pos,
+                             const uint32_t color,
+                             bool forceColor = false) {
+        m_leds.setPixelColor(FIRST_HOUR_LED + pos, color, forceColor);
+    }
+
+    // if pos == 0 then the LED is in the 12:00 position
+    void DrawOutsideRingPixel(const int pos,
+                              const uint32_t color,
+                              bool forceColor = false) {
+        m_leds.setPixelColor(FIRST_MINUTE_LED + pos, color, forceColor);
     }
 
     int DrawText(int x, String text, uint32_t color) {
@@ -186,7 +206,7 @@ class Display {
             // pressing a button will speed up a long blocking scrolling
             // message
             waitToScroll.Reset();
-            int adjustedDelay = delayMs;
+            size_t adjustedDelay = delayMs;
             while (waitToScroll.Ms() < adjustedDelay) {
                 Update(true);
                 adjustedDelay = Button::AreAnyButtonsPressed() != -1
@@ -199,14 +219,14 @@ class Display {
     }
 
     void DrawTextCentered(String text, uint32_t color) {
-        int pos = 9 - (text.length() * 2);
-        DrawText(pos, text, color);
+        int x = 9 - (text.length() * 2);
+        DrawText(x, text, color);
     }
 
-    void ScrollHorizontal(const int num,
+    void ScrollHorizontal(const int numColumns,
                           const int direction,
                           const int delayMs = SCROLL_DELAY_HORIZONTAL_MS) {
-        for (int i = 0; i < num; ++i) {
+        for (int i = 0; i < numColumns; ++i) {
             MoveHorizontal(direction);
             Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
@@ -214,10 +234,10 @@ class Display {
         ElapsedTime::Delay(delayMs);
     }
 
-    void ScrollVertical(const int num,
+    void ScrollVertical(const int numRows,
                         const int direction,
                         const int delayMs = SCROLL_DELAY_VERTICAL_MS) {
-        for (int i = 0; i < num; ++i) {
+        for (int i = 0; i < numRows; ++i) {
             MoveVertical(direction);
             Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
@@ -226,17 +246,19 @@ class Display {
     }
 
     void DrawMinuteLED(const int minute, const uint32_t color) {
-        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color);
+        // represent 60 seconds with 12 LEDs, 60 / 12 = 5
+        DrawOutsideRingPixel(minute / 5, color);
     }
     void DrawHourLED(const int hour, const uint32_t color) {
-        DrawPixel(FIRST_HOUR_LED + hour - 1, color);
+        DrawInsideRingPixel(hour - 1, color);
     }
 
-    void DrawSecondLEDs(const int minute,
+    void DrawSecondLEDs(const int second,
                         const uint32_t color,
                         const bool forceColor = false) {
-        DrawPixel(FIRST_HOUR_LED + GetSecondLED(minute), color, forceColor);
-        DrawPixel(FIRST_MINUTE_LED + GetMinuteLED(minute), color, forceColor);
+        DrawInsideRingPixel(second < 5 ? 11 : (second / 5) - 1, color,
+                            forceColor);
+        DrawOutsideRingPixel(second / 5, color, forceColor);
     }
 
     int GetMinuteLED(const int minute) {
@@ -285,6 +307,16 @@ class Display {
         return charWidth + 1;
     }
 
+    void DrawColorWheel(uint8_t bottomPixelWheelPos) {
+        uint8_t wheelPos = bottomPixelWheelPos - 128;
+        for (size_t i = 0; i < 12; ++i) {
+            uint32_t color = ColorWheel(wheelPos);
+            wheelPos += 255 / 12;
+            DrawInsideRingPixel(i == 0 ? 11 : i - 1, color);
+            DrawOutsideRingPixel(i, color);
+        }
+    }
+
     static uint32_t ColorWheel(uint8_t pos) {
         pos = 255 - pos;
         if (pos < 85) {
@@ -322,8 +354,8 @@ class Display {
         uint32_t color = m_leds.getPixelColor(fromRow * WIDTH + fromCol);
 
         if (toCol >= 0 && toCol < WIDTH && toRow >= 0 && toRow < HEIGHT) {
-            DrawPixel(toRow * WIDTH + toCol, color);
-            DrawPixel(fromRow * WIDTH + fromCol, BLACK);
+            DrawPixel(toCol, toRow, color);
+            DrawPixel(fromCol, fromRow, BLACK);
         }
     }
 

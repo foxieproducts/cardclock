@@ -37,10 +37,10 @@ class Button {
         bool canRepeat{true};
 
         // values below are in milliseconds
-        int repeatRate{50};
-        int delayBeforeRepeat{400};
-        int delayBeforePress{0};  // must be held prior to a PRESS event
-        int debounceTime{5};
+        size_t repeatRate{50};
+        size_t delayBeforeRepeat{400};
+        size_t delayBeforePressEvent{0};  // must be held prior to a PRESS event
+        size_t debounceTime{5};
         HandlerFunc_t handlerFunc;
     } config;
 
@@ -88,7 +88,7 @@ class Button {
         return -1;
     }
 
-    static int WaitForButtonPress(const int maxWaitMs = 0) {
+    static int WaitForButtonPress(const size_t maxWaitMs = 10000) {
         ElapsedTime wait;
         while (true) {
             int button = AreAnyButtonsPressed();
@@ -101,6 +101,17 @@ class Button {
             }
             yield();
         }
+    }
+
+    static void WaitForNoButtons(const size_t maxWaitMs = 10000) {
+        ElapsedTime wait;
+        while (AreAnyButtonsPressed() != -1) {
+            if (maxWaitMs && wait.Ms() > maxWaitMs) {
+                return;
+            }
+            yield();
+        }
+        return;
     }
 
   private:
@@ -126,7 +137,8 @@ class Button {
         }
 
         if (m_isPressed != m_wasPressed) {
-            if (m_isPressed && m_timeInState.Ms() < config.delayBeforePress) {
+            if (m_isPressed &&
+                m_timeInState.Ms() < config.delayBeforePressEvent) {
                 return;
             }
 

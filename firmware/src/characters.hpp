@@ -1,3 +1,6 @@
+// This file implements characters as lines of code within display.hpp
+// It is not meant to be included elsewhere.
+
 // clang-format off
 #define CHAR(c, ...) (character == c) { charData = { __VA_ARGS__ }; }
 if      CHAR('A',
@@ -377,4 +380,10 @@ else if CHAR(100,
           0, 1, 0,
           1, 1, 1,
           0, 0, 0,
+          0, 0, 0)
+else if CHAR(101,
+          0, 0, 0,
+          0, 1, 0,
+          0, 1, 1,
+          0, 1, 0,
           0, 0, 0)

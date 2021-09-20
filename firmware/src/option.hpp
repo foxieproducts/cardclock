@@ -114,15 +114,15 @@ class TextListOption : public Option {
         const int downColor = m_index > min ? GREEN : DARK_GREEN;
         const int upColor = m_index < max - 1 ? GREEN : DARK_GREEN;
 
-        m_display.DrawPixel(15, upColor);
-        m_display.DrawPixel(31, upColor);
-        m_display.DrawPixel(32, upColor);
-        m_display.DrawPixel(33, upColor);
+        m_display.DrawPixel(15, 0, upColor);
+        m_display.DrawPixel(14, 1, upColor);
+        m_display.DrawPixel(15, 1, upColor);
+        m_display.DrawPixel(16, 1, upColor);
 
-        m_display.DrawPixel(65, downColor);
-        m_display.DrawPixel(66, downColor);
-        m_display.DrawPixel(67, downColor);
-        m_display.DrawPixel(83, downColor);
+        m_display.DrawPixel(14, 3, downColor);
+        m_display.DrawPixel(15, 3, downColor);
+        m_display.DrawPixel(16, 3, downColor);
+        m_display.DrawPixel(15, 4, downColor);
     }
 };
 
