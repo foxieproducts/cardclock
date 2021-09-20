@@ -20,8 +20,8 @@
 
 void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi);
 
-using namespace std;
 void setup() {
+    using namespace std;
     auto settings = make_shared<Settings>();
     auto display = make_shared<Display>(*settings);
     auto wifi = make_shared<FoxieWiFi>(*settings, *display);
@@ -66,7 +66,7 @@ void setup() {
     configMenu->AddRunFuncSetting(F("UPDT"), [&]() { updater->Download(); });
     menuMgr->Add(configMenu);
 
-    menuMgr->ActivateMenu(1);  // clock menu
+    menuMgr->SetDefaultAndActivateMenu(1);  // clock menu
 
     // use a while loop instead of loop() ... I just hate globals, OK?
     while (true) {
