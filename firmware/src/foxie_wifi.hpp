@@ -139,6 +139,7 @@ class FoxieWiFi {
                 String(map(progress, 0, total, 0, 100)) + F("%"), BLUE);
             m_display.Update();
             if (Button::AreAnyButtonsPressed() == PIN_BTN_LEFT) {
+                m_display.Clear();
                 m_display.DrawTextCentered("CNCL", RED);
                 m_display.Show();
                 Button::WaitForNoButtons();

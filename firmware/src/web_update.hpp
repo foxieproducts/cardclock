@@ -66,6 +66,7 @@ class WebUpdate {
                 m_display.Update();
                 if (Button::AreAnyButtonsPressed() == PIN_BTN_LEFT &&
                     m_settings[F("DEVL")] == F("ON")) {
+                    m_display.Clear();
                     m_display.DrawTextCentered("CNCL", RED);
                     m_display.Show();
                     Button::WaitForNoButtons();
