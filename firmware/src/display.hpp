@@ -116,6 +116,10 @@ class Display {
     Display(Settings& settings) : m_settings(settings) {
         m_pixels.begin();
 
+        // make sure the blue LED on the ESP-12F is off
+        pinMode(LED_BUILTIN, OUTPUT);
+        digitalWrite(LED_BUILTIN, HIGH);
+
         if (!settings.containsKey(F("MINB"))) {
             settings[F("MINB")] = String(MIN_BRIGHTNESS_DEFAULT);
         }
@@ -282,7 +286,7 @@ class Display {
 
     int DrawChar(const int x, char character, const uint32_t color) {
         std::vector<uint8_t> charData;
-        // clang-format off
+// clang-format off
         // --------------- 
         // characters are implemented in code as a list of if/else statements
         // ---------------
