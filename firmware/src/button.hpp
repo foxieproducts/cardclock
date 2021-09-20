@@ -44,8 +44,8 @@ class Button {
         HandlerFunc_t handlerFunc;
     } config;
 
-    Button(int pin, int inputType) : Button({pin}, inputType) {}
-    Button(std::initializer_list<int> pins, int inputType) {
+    Button(const int pin, const int inputType) : Button({pin}, inputType) {}
+    Button(std::initializer_list<int> pins, const int inputType) {
         m_pins = pins;
         for (auto pin : m_pins) {
             pinMode(pin, inputType);

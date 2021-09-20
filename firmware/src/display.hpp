@@ -27,11 +27,26 @@ enum Colors_e {
     DARK_GRAY = 0x3F3F3F,
 };
 
+enum SpecialChars_e {
+    CHAR_UP_ARROW = 100,
+    CHAR_DOWN_ARROW = 101,
+    CHAR_RIGHT_ARROW = 102,
+    CHAR_LEFT_ARROW = 103,
+};
+
+enum ScrollDirection_e {
+    SCROLL_UP = -1,
+    SCROLL_DOWN = 1,
+    SCROLL_RIGHT = 1,
+    SCROLL_LEFT = -1,
+};
+
 enum Display_e {
     WIDTH = 17,
     HEIGHT = 5,
     ROUND_LEDS = 24,
-    FIRST_HOUR_LED = WIDTH * HEIGHT,
+    LED_MATRIX_TOTAL_LEDS = WIDTH * HEIGHT,
+    FIRST_HOUR_LED = LED_MATRIX_TOTAL_LEDS,
     FIRST_MINUTE_LED = FIRST_HOUR_LED + 12,
     TOTAL_LEDS = (WIDTH * HEIGHT) + ROUND_LEDS,
 
@@ -53,21 +68,23 @@ class Display {
     // data, pixel read operations at low brightness behave poorly. Having this
     // extra buffer solves this problem, which allows better horizontal
     // scrolling in all brightness conditions. In addition, provides the ability
-    // to intercept setPixelColor calls to change the color of any pixels
+    // to intercept setPixelColor calls to change the color of any pixels.
+    // the override functionality is used by the rainbow and shimmer effects.
     class PixelsWithBuffer : public Adafruit_NeoPixel {
         using Adafruit_NeoPixel::Adafruit_NeoPixel;
         uint32_t m_pixels[TOTAL_LEDS] = {0};
         std::function<void(uint16_t num, uint32_t&)> m_colorOverrideFunc;
 
       public:
-        void setPixelColor(uint16_t num,
+        void setPixelColor(const uint16_t num,
                            uint32_t color,
                            bool forceColor = false) {
-            if (m_colorOverrideFunc && !forceColor) {
-                m_colorOverrideFunc(num, color);
-            }
             if (num >= TOTAL_LEDS) {
                 return;
+            }
+
+            if (m_colorOverrideFunc && !forceColor) {
+                m_colorOverrideFunc(num, color);
             }
 
             m_pixels[num] = color;
@@ -79,16 +96,16 @@ class Display {
             }
         }
         void setColorOverride(
-            std::function<void(uint16_t num, uint32_t&)> func) {
+            std::function<void(const uint16_t num, uint32_t&)> func) {
             m_colorOverrideFunc = func;
         }
         void clearColorOverride() { m_colorOverrideFunc = nullptr; }
-        uint32_t getPixelColor(uint16_t n) { return m_pixels[n]; }
+        uint32_t getPixelColor(uint16_t num) { return m_pixels[num]; }
     };
 
     Settings& m_settings;
 
-    PixelsWithBuffer m_leds{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
+    PixelsWithBuffer m_pixels{TOTAL_LEDS, LEDS_PIN, NEO_GRB + NEO_KHZ800};
     LightSensor m_lightSensor;
     size_t m_currentBrightness{0};
     size_t m_lastBrightness{0};
@@ -97,11 +114,7 @@ class Display {
 
   public:
     Display(Settings& settings) : m_settings(settings) {
-        m_leds.begin();
-
-        // make sure the blue LED on the ESP-12F is off
-        pinMode(LED_BUILTIN, OUTPUT);
-        digitalWrite(LED_BUILTIN, HIGH);
+        m_pixels.begin();
 
         if (!settings.containsKey(F("MINB"))) {
             settings[F("MINB")] = String(MIN_BRIGHTNESS_DEFAULT);
@@ -111,9 +124,9 @@ class Display {
         }
     }
 
-    PixelsWithBuffer& GetLEDs() { return m_leds; };
+    PixelsWithBuffer& GetPixels() { return m_pixels; };
 
-    void Update(bool force = false) {
+    void Update(const bool force = false) {
         if (m_sinceLastLightSensorUpdate.Ms() > LIGHT_SENSOR_UPDATE_MS) {
             m_sinceLastLightSensorUpdate.Reset();
             m_currentBrightness = m_lightSensor.Get();
@@ -140,46 +153,51 @@ class Display {
         ets_intr_lock();
         noInterrupts();
 
-        m_leds.show();
+        m_pixels.show();
 
         interrupts();
         ets_intr_unlock();
         system_soft_wdt_restart();
     }
 
-    void Clear(uint32_t color = BLACK, const bool includeRoundLEDs = false) {
-        int num = WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
-        for (int i = 0; i < num; ++i) {
-            m_leds.setPixelColor(i, color);
+    void Clear(const uint32_t color = BLACK,
+               const bool includeRoundLEDs = false) {
+        const size_t numToClear =
+            WIDTH * HEIGHT + (includeRoundLEDs ? ROUND_LEDS : 0);
+        for (size_t i = 0; i < numToClear; ++i) {
+            m_pixels.setPixelColor(i, color);
         }
     }
 
-    void ClearRoundLEDs(uint32_t color = BLACK) {
-        for (int i = FIRST_HOUR_LED; i < TOTAL_LEDS; ++i) {
-            m_leds.setPixelColor(i, color);
+    void ClearRoundLEDs(const uint32_t color = BLACK) {
+        for (size_t i = FIRST_HOUR_LED; i < TOTAL_LEDS; ++i) {
+            m_pixels.setPixelColor(i, color);
         }
     }
 
-    /* forceColor will ignore the colorOverrideFunc (shimmer/rainbow effect) */
+    // if forceColor == true, the colorOverrideFunc (used by shimmer/rainbow
+    // effects) will not be called for this pixel and thus cannot change its
+    // color. otherwise, the current colorOverrideFunc can change any pixel
+    // at will. fun!
     void DrawPixel(const int x,
                    const int y,
                    const uint32_t color,
-                   bool forceColor = false) {
-        m_leds.setPixelColor(y * WIDTH + x, color, forceColor);
+                   const bool forceColor = false) {
+        m_pixels.setPixelColor(y * WIDTH + x, color, forceColor);
     }
 
     // if pos == 0 then LED is at the 1:00 position
     void DrawInsideRingPixel(const int pos,
                              const uint32_t color,
-                             bool forceColor = false) {
-        m_leds.setPixelColor(FIRST_HOUR_LED + pos, color, forceColor);
+                             const bool forceColor = false) {
+        m_pixels.setPixelColor(FIRST_HOUR_LED + pos, color, forceColor);
     }
 
     // if pos == 0 then the LED is in the 12:00 position
     void DrawOutsideRingPixel(const int pos,
                               const uint32_t color,
-                              bool forceColor = false) {
-        m_leds.setPixelColor(FIRST_MINUTE_LED + pos, color, forceColor);
+                              const bool forceColor = false) {
+        m_pixels.setPixelColor(FIRST_MINUTE_LED + pos, color, forceColor);
     }
 
     int DrawText(int x, String text, uint32_t color) {
@@ -194,9 +212,17 @@ class Display {
         return textWidth;
     }
 
-    void DrawTextScrolling(String text,
-                           uint32_t color,
-                           int delayMs = SCROLLING_TEXT_MS) {
+    void DrawTextCentered(const String& text, const uint32_t color) {
+        int x = 9 - (text.length() *
+                     2);  // chars are usually 3 pixels wide with a 1 pixel
+                          // space. this is not completely accurate for a few
+                          // narrow characters, such as the colon
+        DrawText(x, text, color);
+    }
+
+    void DrawTextScrolling(const String& text,
+                           const uint32_t color,
+                           const size_t delayMs = SCROLLING_TEXT_MS) {
         const auto length = DrawText(0, text, color);
 
         ElapsedTime waitToScroll;
@@ -218,35 +244,28 @@ class Display {
         }
     }
 
-    void DrawTextCentered(String text, uint32_t color) {
-        int x = 9 - (text.length() * 2);
-        DrawText(x, text, color);
-    }
-
     void ScrollHorizontal(const int numColumns,
                           const int direction,
-                          const int delayMs = SCROLL_DELAY_HORIZONTAL_MS) {
+                          const size_t delayMs = SCROLL_DELAY_HORIZONTAL_MS) {
         for (int i = 0; i < numColumns; ++i) {
             MoveHorizontal(direction);
             Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
         }
-        ElapsedTime::Delay(delayMs);
     }
 
     void ScrollVertical(const int numRows,
                         const int direction,
-                        const int delayMs = SCROLL_DELAY_VERTICAL_MS) {
+                        const size_t delayMs = SCROLL_DELAY_VERTICAL_MS) {
         for (int i = 0; i < numRows; ++i) {
             MoveVertical(direction);
             Show();  // don't wait for FPS update
             ElapsedTime::Delay(delayMs);
         }
-        ElapsedTime::Delay(delayMs);
     }
 
     void DrawMinuteLED(const int minute, const uint32_t color) {
-        // represent 60 seconds with 12 LEDs, 60 / 12 = 5
+        // represent 60 seconds using 12 LEDs, 60 / 12 = 5
         DrawOutsideRingPixel(minute / 5, color);
     }
     void DrawHourLED(const int hour, const uint32_t color) {
@@ -261,23 +280,17 @@ class Display {
         DrawOutsideRingPixel(second / 5, color, forceColor);
     }
 
-    int GetMinuteLED(const int minute) {
-        return minute / 5;  // represent 60 seconds with 12 LEDs, 60 / 12 = 5
-    }
-
-    int GetSecondLED(const int minute) {
-        return minute >= 5 ? GetMinuteLED(minute) - 1 : 11;
-    }
-
-    int DrawChar(const int x, char character, uint32_t color) {
+    int DrawChar(const int x, char character, const uint32_t color) {
         std::vector<uint8_t> charData;
         // clang-format off
-
-        #include "characters.hpp" // all display characters are implemented as code
+        // --------------- 
+        // characters are implemented in code as a list of if/else statements
+        // ---------------
+        #include "characters.hpp" 
         
+        // show a ? for unknown characters
         if (charData.empty()) {
             charData = {
-                // show a ? for unknown characters
                 1, 1, 0,
                 0, 0, 1,
                 0, 1, 0,
@@ -285,29 +298,25 @@ class Display {
                 0, 1, 0,
             };
         }
+
+        // ---------------
         // clang-format on
 
         const int charWidth = charData.size() / HEIGHT;
-
         const uint8_t* data = &charData[0];
-
         for (int row = 0; row < HEIGHT; ++row) {
-            int column = x;
-            for (; column < x + charWidth; ++column) {
-                const int led = column + row * WIDTH;
+            for (int column = x; column < x + charWidth; ++column) {
                 if (column >= 0 && column < WIDTH && *data) {
-                    m_leds.setPixelColor(led, color);
+                    DrawPixel(column, row, color);
                 }
                 data++;
-
-                // TODO: Add a way for the calling function to change the
-                // color as it is drawn
             }
         }
+
         return charWidth + 1;
     }
 
-    void DrawColorWheel(uint8_t bottomPixelWheelPos) {
+    void DrawColorWheel(const uint8_t bottomPixelWheelPos) {
         uint8_t wheelPos = bottomPixelWheelPos - 128;
         for (size_t i = 0; i < 12; ++i) {
             uint32_t color = ColorWheel(wheelPos);
@@ -334,8 +343,8 @@ class Display {
 
     uint16_t GetBrightness() { return m_currentBrightness; }
     void SetBrightness(const uint8_t brightness) {
-        m_leds.restorePixels();
-        m_leds.setBrightness(brightness);
+        m_pixels.restorePixels();
+        m_pixels.setBrightness(brightness);
         m_lastBrightness = m_currentBrightness = brightness;
     }
     bool IsAtMinimumBrightness() {
@@ -350,8 +359,11 @@ class Display {
     }
 
   private:
-    void MovePixel(int fromCol, int fromRow, int toCol, int toRow) {
-        uint32_t color = m_leds.getPixelColor(fromRow * WIDTH + fromCol);
+    void MovePixel(const int fromCol,
+                   const int fromRow,
+                   const int toCol,
+                   const int toRow) {
+        uint32_t color = m_pixels.getPixelColor(fromRow * WIDTH + fromCol);
 
         if (toCol >= 0 && toCol < WIDTH && toRow >= 0 && toRow < HEIGHT) {
             DrawPixel(toCol, toRow, color);
@@ -359,35 +371,33 @@ class Display {
         }
     }
 
-    void MoveHorizontal(int num) {
+    void MoveHorizontal(const int num) {
         for (int row = 0; row < HEIGHT; ++row) {
             if (num < 0) {
-                for (int col = 1; col < WIDTH; ++col) {
-                    MovePixel(col, row, col + num, row);
+                for (int column = 1; column < WIDTH; ++column) {
+                    MovePixel(column, row, column + num, row);
                 }
             } else {
-                for (int col = WIDTH - 2; col >= 0; --col) {
-                    MovePixel(col, row, col + num, row);
+                for (int column = WIDTH - 2; column >= 0; --column) {
+                    MovePixel(column, row, column + num, row);
                 }
             }
         }
     }
 
-    void MoveVertical(int num) {
+    void MoveVertical(const int num) {
         if (num < 0) {
             for (int row = 1; row < HEIGHT; ++row) {
-                for (int col = 0; col < WIDTH; ++col) {
-                    MovePixel(col, row, col, row + num);
+                for (int column = 0; column < WIDTH; ++column) {
+                    MovePixel(column, row, column, row + num);
                 }
             }
         } else {
             for (int row = HEIGHT - 2; row >= 0; --row) {
-                for (int col = 0; col < WIDTH; ++col) {
-                    MovePixel(col, row, col, row + num);
+                for (int column = 0; column < WIDTH; ++column) {
+                    MovePixel(column, row, column, row + num);
                 }
             }
         }
     }
-
-  public:
 };

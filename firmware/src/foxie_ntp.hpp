@@ -12,12 +12,16 @@ class FoxieNTP {
         ONE_SECOND = 1000,
         ONE_MINUTE = 60000,
         WAIT_TO_INITIALIZE = 4000,
+        UTC_ZERO = 0,
     };
+
     Settings& m_settings;
     Rtc& m_rtc;
     WiFiUDP m_udp;
-    NTPClient m_ntpClient{m_udp, "time.nist.gov", 0, int(ONE_MINUTE)};
+    NTPClient m_ntpClient{m_udp, "time.nist.gov", UTC_ZERO, int(ONE_MINUTE)};
+
     ElapsedTime m_sinceLastUpdate;
+
     bool m_isInitialized{false};
     bool m_ntpSynced{false};
     size_t m_updateRTCInterval{ONE_SECOND};
@@ -35,7 +39,7 @@ class FoxieNTP {
                     m_ntpClient.update();
                 } else if (m_sinceLastUpdate.Ms() > WAIT_TO_INITIALIZE) {
                     // check every few seconds until our first sync,
-                    // then sync once per minute.
+                    // then sync once per minute
                     m_sinceLastUpdate.Reset();
                     if (m_ntpClient.update()) {
                         m_ntpSynced = true;
@@ -56,9 +60,12 @@ class FoxieNTP {
     }
 
     void UpdateRTCTime() {
-        const int offset =
-            m_settings.containsKey("UTC") ? m_settings["UTC"].as<int>() : 0;
+        const int offset = m_settings.containsKey("UTC")
+                               ? m_settings["UTC"].as<int>()
+                               : UTC_ZERO;
+
         m_ntpClient.setTimeOffset(offset * 60 * 60);
+
         if (m_ntpClient.getHours() != m_rtc.Hour() ||
             m_ntpClient.getMinutes() != m_rtc.Minute() ||
             m_ntpClient.getSeconds() != m_rtc.Second()) {

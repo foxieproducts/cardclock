@@ -8,20 +8,20 @@
 
 class Option {
   protected:
-    String m_name;
+    const String m_name;
     bool m_isDone{false};
     std::function<void()> m_finishFunc;
 
   public:
-    Option(String name, std::function<void()> finishFunc)
+    Option(const String& name, std::function<void()> finishFunc)
         : m_name(name), m_finishFunc(finishFunc) {}
     virtual String GetName() { return m_name; }
     virtual String GetCurrentValue() { return ""; };
-    virtual void Begin(){};
+    virtual void Begin(){};  // called by MenuManager on appearance
     virtual void Update() {}
     virtual void Up() {}
     virtual void Down() {}
-    virtual void Finish() {
+    virtual void Finish() {  // called by MenuManager when exiting
         End();
         if (m_finishFunc) {
             m_finishFunc();
@@ -36,13 +36,13 @@ class TextListOption : public Option {
   protected:
     Display& m_display;
     Settings& m_settings;
-    std::vector<String> m_values;
+    const std::vector<String> m_values;
     int m_index{0};
 
   public:
     TextListOption(Display& display,
                    Settings& settings,
-                   String name,
+                   const String& name,
                    std::vector<String> values,
                    std::function<void()> finishFunc)
         : Option(name, finishFunc),
@@ -50,18 +50,15 @@ class TextListOption : public Option {
           m_settings(settings),
           m_values(values) {}
 
-    virtual void SetValues(std::vector<String> values) {
-        m_values = values;
-        Begin();
-    }
     virtual String GetCurrentValue() override {
         return m_values.size() ? m_values[m_index] : "";
     }
 
     virtual void Begin() override {
-        if (!m_values.size()) {
+        if (m_values.empty()) {
             return;
         }
+
         if (m_values[m_index] != m_settings[m_name]) {
             // when we come back into the menu, make sure that the setting
             // selected is what is actually set in m_settings
@@ -76,26 +73,29 @@ class TextListOption : public Option {
     }
 
     virtual void Update() override {
-        if (!m_values.size()) {
+        if (m_values.empty()) {
             return;
         }
+
         m_display.DrawText(0, m_values[m_index], GRAY);
         DrawArrows(0, m_values.size());
     }
 
     virtual void Up() override {
-        if (!m_values.size()) {
+        if (m_values.empty()) {
             return;
         }
+
         if ((size_t)m_index < m_values.size() - 1) {
             m_index++;
             m_display.ScrollVertical(HEIGHT, 1);
         }
     }
     virtual void Down() override {
-        if (!m_values.size()) {
+        if (m_values.empty()) {
             return;
         }
+
         if (m_index > 0) {
             m_index--;
             m_display.ScrollVertical(HEIGHT, -1);
@@ -110,19 +110,12 @@ class TextListOption : public Option {
     }
 
   protected:
-    virtual void DrawArrows(int min, int max) {
+    virtual void DrawArrows(const int min, const int max) {
         const int downColor = m_index > min ? GREEN : DARK_GREEN;
         const int upColor = m_index < max - 1 ? GREEN : DARK_GREEN;
 
-        m_display.DrawPixel(15, 0, upColor);
-        m_display.DrawPixel(14, 1, upColor);
-        m_display.DrawPixel(15, 1, upColor);
-        m_display.DrawPixel(16, 1, upColor);
-
-        m_display.DrawPixel(14, 3, downColor);
-        m_display.DrawPixel(15, 3, downColor);
-        m_display.DrawPixel(16, 3, downColor);
-        m_display.DrawPixel(15, 4, downColor);
+        m_display.DrawChar(14, CHAR_UP_ARROW, upColor);
+        m_display.DrawChar(14, CHAR_DOWN_ARROW, downColor);
     }
 };
 

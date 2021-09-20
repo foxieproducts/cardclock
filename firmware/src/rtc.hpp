@@ -12,9 +12,10 @@ class Rtc {
 
     Rtc_Pcf8563 m_rtc;
     Settings& m_settings;
-    inline static bool m_isInitialized{false};
-    inline static bool m_receivedInterrupt{false};
-    inline static int m_millisAtInterrupt{0};
+    bool m_isInitialized{false};
+    size_t m_millisAtInterrupt{0};
+
+    inline static bool m_receivedInterrupt{false};  // used by InterruptISR()
 
   public:
     Rtc(Settings& settings) : m_settings(settings) { m_rtc.getDateTime(); }
@@ -26,8 +27,10 @@ class Rtc {
             Initialize();
         }
 
-        // ideally, we get interrupted every 1 second. However, sometimes the
-        // PCF8563 seems to get confused and send interrupts once a minute
+        // ideally, we get interrupted every 1 second. However, the PCF8563
+        // occasionally seems to get confused and send interrupts once a minute,
+        // so this forces us to check in with the RTC once a second if it is
+        // stuck in that state
         if (m_receivedInterrupt || Millis() >= 1000) {
             m_rtc.getDateTime();
             m_receivedInterrupt = false;
@@ -43,7 +46,7 @@ class Rtc {
     int Minute() { return m_rtc.getMinute(); }
     int Second() { return m_rtc.getSecond(); }
     int Millis() { return millis() - m_millisAtInterrupt; }
-    void SetTime(byte hour, byte minute, byte second) {
+    void SetTime(uint8_t hour, uint8_t minute, uint8_t second) {
         m_rtc.setTime(hour, minute, second);
         m_millisAtInterrupt = millis();
     }
@@ -79,7 +82,7 @@ class Rtc {
             m_rtc.clearStatus();
             m_rtc.clearTimer();
 
-            // interrupt every second
+            // interrupt every second, hopefully
             m_rtc.setTimer(TIMER_NUM_SECONDS, TMR_1Hz, true);
 
             m_isInitialized = true;

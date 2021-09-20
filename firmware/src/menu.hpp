@@ -17,8 +17,8 @@ class Menu {
         : m_display(display), m_settings(settings) {}
 
     virtual void Update() = 0;
-    virtual void Activate() {}
-    virtual void Hide() {}
+    virtual void Activate() {}  // called when menu becomes active
+    virtual void Hide() {}      // called when menu becomes inactive
     virtual bool Up(const Button::Event_e evt) { return false; }
     virtual bool Down(const Button::Event_e evt) { return false; }
     virtual bool Left(const Button::Event_e evt) { return false; }
@@ -41,35 +41,7 @@ class MenuManager {
   public:
     MenuManager(Display& display, Settings& settings)
         : m_display(display), m_settings(settings) {
-        m_btnLeft.config.repeatRate = 250;
-        m_btnRight.config.repeatRate = 250;
-        m_btnLeft.config.canRepeat = false;
-        m_btnRight.config.canRepeat = false;
-
-        m_btnUp.config.handlerFunc = [&](const Button::Event_e evt) {
-            m_menus[m_activeMenu]->Up(evt);
-        };
-        m_btnDown.config.handlerFunc = [&](const Button::Event_e evt) {
-            m_menus[m_activeMenu]->Down(evt);
-        };
-        m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
-            const bool handled = m_menus[m_activeMenu]->Left(evt);
-            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (m_activeMenu == 0) {
-                    return;
-                }
-                ActivateMenu(m_activeMenu - 1);
-            }
-        };
-        m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
-            const bool handled = m_menus[m_activeMenu]->Right(evt);
-            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
-                if (m_activeMenu == (int)m_menus.size() - 1) {
-                    return;
-                }
-                ActivateMenu(m_activeMenu + 1);
-            }
-        };
+        ConfigureButtons();
     }
 
     void Add(std::shared_ptr<Menu> menu) {
@@ -87,11 +59,47 @@ class MenuManager {
         m_menus[m_activeMenu]->Update();
     }
 
-    void ActivateMenu(size_t menuNum) {
+    void ActivateMenu(const size_t menuNum) {
         if (menuNum < m_menus.size()) {
             m_menus[m_activeMenu]->Hide();
             m_activeMenu = menuNum;
             m_menus[m_activeMenu]->Activate();
         }
+    }
+
+  private:
+    void ConfigureButtons() {
+        m_btnLeft.config.repeatRate = 250;
+        m_btnRight.config.repeatRate = 250;
+        m_btnLeft.config.canRepeat = false;
+        m_btnRight.config.canRepeat = false;
+
+        m_btnUp.config.handlerFunc = [&](const Button::Event_e evt) {
+            m_menus[m_activeMenu]->Up(evt);
+        };
+
+        m_btnDown.config.handlerFunc = [&](const Button::Event_e evt) {
+            m_menus[m_activeMenu]->Down(evt);
+        };
+
+        m_btnLeft.config.handlerFunc = [&](const Button::Event_e evt) {
+            const bool handled = m_menus[m_activeMenu]->Left(evt);
+            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
+                if (m_activeMenu == 0) {
+                    return;
+                }
+                ActivateMenu(m_activeMenu - 1);
+            }
+        };
+
+        m_btnRight.config.handlerFunc = [&](const Button::Event_e evt) {
+            const bool handled = m_menus[m_activeMenu]->Right(evt);
+            if (!handled && (evt == Button::PRESS || evt == Button::REPEAT)) {
+                if (m_activeMenu == (int)m_menus.size() - 1) {
+                    return;
+                }
+                ActivateMenu(m_activeMenu + 1);
+            }
+        };
     }
 };

@@ -33,7 +33,7 @@ class TimeMenu : public Menu {
             m_second = m_rtc.Second();
         }
 
-        DrawClockDigits();
+        DrawTime();
     }
 
     virtual void Activate() {
@@ -92,11 +92,12 @@ class TimeMenu : public Menu {
         return true;
     }
 
-    virtual bool Left(const Button::Event_e evt) {
+    virtual bool Left(const Button::Event_e evt) override {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
             if (m_mode == SET_HOUR) {
                 SetRTCIfTimeChanged();
-                // exit by allowing MenuManager to handle button press
+                // exit the settings menu, MenuManager treats this as
+                // moving to the previous Menu
                 return false;
             } else if (m_mode == SET_MINUTE) {
                 m_mode = SET_HOUR;
@@ -108,7 +109,7 @@ class TimeMenu : public Menu {
         return true;
     }
 
-    virtual bool Right(const Button::Event_e evt) {
+    virtual bool Right(const Button::Event_e evt) override {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
             if (m_mode == SET_HOUR) {
                 m_mode = SET_MINUTE;
@@ -117,9 +118,10 @@ class TimeMenu : public Menu {
                 m_mode = SET_SECOND;
             } else if (m_mode == SET_SECOND) {
                 m_display.ScrollHorizontal(9, 1);
-                DrawClockDigits();
+                DrawTime();
                 SetRTCIfTimeChanged();
-                // exit by allowing MenuManager to handle button press
+                // exit the settings menu, MenuManager treats this as
+                // moving to the next Menu
                 return false;
             }
         }
@@ -134,7 +136,7 @@ class TimeMenu : public Menu {
         }
     }
 
-    void DrawClockDigits() {
+    void DrawTime() {
         m_display.Clear(BLACK);
 
         uint32_t color = m_rtc.Millis() < 500 ? GREEN : 0x00AF00;
@@ -147,8 +149,7 @@ class TimeMenu : public Menu {
             sprintf(text, "%02d", m_second);
             m_display.DrawText(10, text, m_mode == SET_SECOND ? color : GRAY);
         } else {
-            bool is24 = m_settings[F("24HR")] == F("ON");
-            if (is24) {
+            if (m_settings[F("24HR")] == F("ON")) {
                 sprintf(text, "%02d", m_hour);
             } else {
                 sprintf(text, "%2d", m_rtc.Conv24to12(m_hour));
@@ -160,9 +161,11 @@ class TimeMenu : public Menu {
         }
 
         m_display.DrawChar(8, ':', GRAY);
+        DrawAnalog(color);
+    }
 
+    void DrawAnalog(const uint32_t color) {
         m_display.ClearRoundLEDs(DARK_GRAY);
-
         m_display.DrawSecondLEDs(m_second,
                                  m_mode == SET_SECOND ? color : WHITE);
         m_display.DrawHourLED(m_rtc.Conv24to12(m_hour),

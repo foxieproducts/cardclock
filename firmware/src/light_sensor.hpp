@@ -11,7 +11,7 @@
  *    The main reason this is used instead of analogRead() is because
  *    analogRead() is unstable on the ESP8266 and crashes often (???)
  * 2. It provides averaging so that light changes happen gradually,
- *    which is also useful to eliminate LED-lamp-PWM-flicker
+ *    which helps eliminate flicker
  * */
 class LightSensor {
   public:
@@ -64,8 +64,8 @@ class LightSensor {
                     // MAX_SENSOR_VAL
                     mean++;
                 }
-                const float val = (99.0f * m_curBrightness) + mean;
-                m_curBrightness = val / 100.0f;
+                const float value = (99.0f * m_curBrightness) + mean;
+                m_curBrightness = value / 100.0f;
             }
             m_timeSinceBrightnessSet.Reset();
         }
@@ -75,12 +75,12 @@ class LightSensor {
 
   private:
     size_t GetHistoryMean() {
-        size_t average = 0;
+        size_t mean = 0;
         for (size_t i = 0; i < HISTORY_SIZE; i++) {
-            average += m_history[i];
+            mean += m_history[i];
         }
 
-        return average / HISTORY_SIZE;
+        return mean / HISTORY_SIZE;
     }
 
     // get a smoothed, bounded value from the sensor

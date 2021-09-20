@@ -10,28 +10,33 @@
 class ConfigMenu : public Menu {
   protected:
     std::vector<std::shared_ptr<Option>> m_options;
-    size_t m_menuOption{0};
-    int m_selectedMenuOption{-1};
-    ElapsedTime m_delayBeforeGreenArrow;
+    size_t m_displayedOption{0};
+    int m_selectedOption{-1};
+    ElapsedTime m_delayBeforeRightArrow;
 
   public:
     ConfigMenu(Display& display, Settings& settings)
         : Menu(display, settings) {}
 
-    void Add(std::shared_ptr<Option> opt) { m_options.push_back(opt); }
-    void AddTextSetting(String name,
-                        std::vector<String> values,
-                        std::function<void()> finishFunc = nullptr) {
+    void Add(const std::shared_ptr<Option> option) {
+        m_options.push_back(option);
+    }
+
+    void AddTextSetting(const String name,
+                        const std::vector<String>& values,
+                        const std::function<void()> finishFunc = nullptr) {
         m_options.push_back(std::make_shared<TextListOption>(
             m_display, m_settings, name, values, finishFunc));
     }
-    void AddRunFuncSetting(String name,
-                           std::function<void()> runFuncOnce,
-                           std::function<void()> finishFunc = nullptr) {
+
+    void AddRunFuncSetting(const String name,
+                           const std::function<void()> runFuncOnce,
+                           const std::function<void()> finishFunc = nullptr) {
         m_options.push_back(
             std::make_shared<OneShotOption>(name, runFuncOnce, finishFunc));
     }
-    void AddRangeSetting(String name,
+
+    void AddRangeSetting(const String name,
                          const int min,
                          const int max,
                          std::function<void()> finishFunc = nullptr) {
@@ -39,17 +44,17 @@ class ConfigMenu : public Menu {
             m_display, m_settings, name, min, max, finishFunc));
     }
 
-    virtual void Update() {
+    virtual void Update() override {
         m_display.Clear();
 
         ShowMenuOptionPositionOnHours();
 
-        if (m_selectedMenuOption >= 0) {
-            m_options[m_selectedMenuOption]->Update();
+        if (m_selectedOption >= 0) {
+            m_options[m_selectedOption]->Update();
 
-            if (m_options[m_selectedMenuOption]->IsDone()) {
-                m_options[m_selectedMenuOption]->Finish();
-                m_selectedMenuOption = -1;
+            if (m_options[m_selectedOption]->IsDone()) {
+                m_options[m_selectedOption]->Finish();
+                m_selectedOption = -1;
             }
         } else {
             ShowCurrentOptionName();
@@ -58,12 +63,12 @@ class ConfigMenu : public Menu {
 
     void ShowCurrentOptionName() {
         m_display.DrawText(
-            0, m_options[m_menuOption]->GetName().substring(0, 4), GRAY);
+            0, m_options[m_displayedOption]->GetName().substring(0, 4), GRAY);
 
-        if (m_delayBeforeGreenArrow.Ms() > 1000) {
-            m_display.DrawChar(14, 101, GREEN);
-        } else if (m_delayBeforeGreenArrow.Ms() > 500) {
-            m_display.DrawChar(15, 101, GREEN);
+        if (m_delayBeforeRightArrow.Ms() > 1000) {
+            m_display.DrawChar(14, CHAR_RIGHT_ARROW, GREEN);
+        } else if (m_delayBeforeRightArrow.Ms() > 500) {
+            m_display.DrawChar(15, CHAR_RIGHT_ARROW, GREEN);
         }
     }
 
@@ -76,68 +81,68 @@ class ConfigMenu : public Menu {
                 m_display.DrawHourLED(i + 1, GRAY);
             }
         }
-        m_display.DrawHourLED(m_menuOption + 1, GREEN);
+        m_display.DrawHourLED(m_displayedOption + 1, GREEN);
     }
 
-    virtual void Activate() {
+    virtual void Activate() override {
         m_display.ScrollHorizontal(WIDTH, -1);
-        m_delayBeforeGreenArrow.Reset();
+        m_delayBeforeRightArrow.Reset();
     }
 
-    virtual bool Up(const Button::Event_e evt) {
+    virtual bool Up(const Button::Event_e evt) override {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
-            if (m_selectedMenuOption >= 0) {
-                m_options[m_selectedMenuOption]->Up();
+            if (m_selectedOption >= 0) {
+                m_options[m_selectedOption]->Up();
             } else {
-                if (m_menuOption-- == 0) {
-                    m_menuOption = m_options.size() - 1;
+                if (m_displayedOption-- == 0) {
+                    m_displayedOption = m_options.size() - 1;
                 }
 
-                m_display.ScrollVertical(HEIGHT, 1);
-                m_delayBeforeGreenArrow.Reset();
+                m_display.ScrollVertical(HEIGHT, SCROLL_DOWN);
+                m_delayBeforeRightArrow.Reset();
             }
         }
         return true;
     }
 
-    virtual bool Down(const Button::Event_e evt) {
+    virtual bool Down(const Button::Event_e evt) override {
         if (evt == Button::PRESS || evt == Button::REPEAT) {
-            if (m_selectedMenuOption >= 0) {
-                m_options[m_selectedMenuOption]->Down();
+            if (m_selectedOption >= 0) {
+                m_options[m_selectedOption]->Down();
             } else {
-                if (++m_menuOption == m_options.size()) {
-                    m_menuOption = 0;
+                if (++m_displayedOption == m_options.size()) {
+                    m_displayedOption = 0;
                 }
 
-                m_display.ScrollVertical(HEIGHT, -1);
-                m_delayBeforeGreenArrow.Reset();
+                m_display.ScrollVertical(HEIGHT, SCROLL_UP);
+                m_delayBeforeRightArrow.Reset();
             }
         }
         return true;
     }
 
-    virtual bool Left(const Button::Event_e evt) {
+    virtual bool Left(const Button::Event_e evt) override {
         if (evt == Button::PRESS) {
-            m_display.ScrollHorizontal(WIDTH, 1);
-            if (m_selectedMenuOption >= 0) {
-                m_options[m_selectedMenuOption]->Finish();
-                m_selectedMenuOption = -1;
+            m_display.ScrollHorizontal(WIDTH, SCROLL_LEFT);
+            if (m_selectedOption >= 0) {
+                m_options[m_selectedOption]->Finish();
+                m_selectedOption = -1;
                 return true;
             }
         }
-        return false;  // exit the settings menu
+        // exit the settings menu, MenuManager treats this as
+        // moving to the previous Menu
+        return false;
     }
 
-    virtual bool Right(const Button::Event_e evt) {
+    virtual bool Right(const Button::Event_e evt) override {
         if (evt == Button::PRESS) {
-            if (m_selectedMenuOption == -1) {
-                m_display.ScrollHorizontal(WIDTH, -1);
-                m_selectedMenuOption = m_menuOption;
-                m_options[m_selectedMenuOption]->Begin();
+            if (m_selectedOption == -1) {
+                m_display.ScrollHorizontal(WIDTH, SCROLL_RIGHT);
+                m_selectedOption = m_displayedOption;
+                m_options[m_selectedOption]->Begin();
             }
         }
         return true;
     }
-
-  private:
 };

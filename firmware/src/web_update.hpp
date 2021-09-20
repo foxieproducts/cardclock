@@ -36,6 +36,16 @@ class WebUpdate {
             }
             yield();
         }
+        ConfigureESPHttpUpdate();
+        if (CheckForNewVersion()) {
+            BeginDownload();
+        }
+    }
+
+  private:
+    void ConfigureESPHttpUpdate() {
+        ESPhttpUpdate.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+        ESPhttpUpdate.rebootOnUpdate(true);
 
         ESPhttpUpdate.onStart([&]() {
             m_display.ClearRoundLEDs(DARK_GRAY);
@@ -67,33 +77,40 @@ class WebUpdate {
                                         RED);
             ESP.restart();
         });
-        ESPhttpUpdate.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-        ESPhttpUpdate.rebootOnUpdate(true);
+    }
 
+    bool CheckForNewVersion() {
         size_t ver = GetVersionFromServer();
         if (ver == 0) {
-            return;
+            return false;
         } else if (ver == FW_VERSION) {
             m_display.DrawTextScrolling(F("Up to date, install again?"), GRAY);
         } else {
             m_display.DrawTextScrolling(
                 F("Press UP to install V") + String(ver), GREEN);
         }
+
         m_display.Clear();
         m_display.DrawText(1, F("UP?"), ORANGE);
-        m_display.DrawChar(13, 100 /* up arrow */, GREEN);
+        m_display.DrawChar(13, CHAR_UP_ARROW, GREEN);
         m_display.Show();
+
         if (Button::WaitForButtonPress(15000) != PIN_BTN_UP) {
             m_display.DrawTextScrolling(F("Canceled"), GRAY);
-            return;
+            return false;
         }
+
+        return true;
+    }
+
+    void BeginDownload() {
         m_display.Clear();
         m_display.DrawTextCentered(F("<<"), BLUE);
         m_display.Show();
 
         // if successful, this will reboot before returning
         ESPhttpUpdate.update(*m_client,
-                             "https://" + String(F(FW_DOWNLOAD_ADDRESS)));
+                             F("https://") + String(F(FW_DOWNLOAD_ADDRESS)));
     }
 
   private:
@@ -105,19 +122,15 @@ class WebUpdate {
         m_display.DrawTextCentered(F(">>"), BLUE);
         m_display.Show();
 
-        if (https.begin(*m_client, "https://" + String(F(FW_VERSION_ADDR)))) {
-            int httpCode = https.GET();
+        if (https.begin(*m_client,
+                        F("https://") + String(F(FW_VERSION_ADDR)))) {
+            const int httpCode = https.GET();
 
-            // httpCode will be negative on error
-            if (httpCode > 0) {
-                // HTTP header has been sent and server response header has been
-                // handled
-
-                // file found at server
-                if (httpCode == HTTP_CODE_OK ||
-                    httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-                    return https.getString().toInt();
-                }
+            // file found at server
+            if (httpCode == HTTP_CODE_OK ||
+                httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+                // success!
+                return https.getString().toInt();
             } else {
                 m_display.DrawTextScrolling(https.errorToString(httpCode),
                                             DARK_RED);
@@ -125,6 +138,7 @@ class WebUpdate {
 
             https.end();
         }
-        return 0;
+
+        return 0;  // failed to get version
     }
 };

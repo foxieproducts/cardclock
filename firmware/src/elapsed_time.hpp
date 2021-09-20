@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>  // for millis()
+#include <stdint.h>   // for size_t
 
 class ElapsedTime {
   private:
