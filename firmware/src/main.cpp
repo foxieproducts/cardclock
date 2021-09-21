@@ -113,8 +113,9 @@ void CheckButtonsOnBoot(Settings& settings, Display& display, FoxieWiFi& wifi) {
             settings.clear();
             settings.Save();
             ESP.eraseConfig();
+            Button::WaitForNoButtons();
+            ESP.restart();
         }
-        Button::WaitForNoButtons();
     }
 }
 
