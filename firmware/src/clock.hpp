@@ -344,7 +344,11 @@ class Clock : public Menu {
     }
 
     void DrawWiFiStatus() {
-        if (m_settings[F("WLED")] == F("ON")) {
+        const bool isWiFiEnabled =
+            m_settings.containsKey("WIFI") && m_settings[F("WIFI")] != F("OFF");
+        const bool isWiFiLEDStatusEnabled =
+            m_settings.containsKey("WLED") && m_settings[F("WLED")] != F("OFF");
+        if (isWiFiEnabled && isWiFiLEDStatusEnabled) {
             if (WiFi.isConnected()) {
                 if (m_mode < MODE_BINARY) {
                     // it's fitting that 42 is exactly the right place for
