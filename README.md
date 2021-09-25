@@ -8,7 +8,7 @@ This is the Foxie CardClock, an open-source GPLv3, ESP8266-powered, WiFi-enabled
 
 There are 2 rings of 12 LEDs at the top of the PCB, which are used to display Hours, Minutes and Seconds. The Minutes and Seconds display with a 5 minute/second resolution.
 
-Enter the 17x5 LED matrix, including a library that has functions for drawing characters, scrolling, and more. All A-Z, 0-9 and most symbols are supported (see (characters.hpp)[firmware/src/characters.hpp]). Easy-to-read source code. 
+Enter the 17x5 LED matrix, including a library that has functions for drawing characters, scrolling, and more. All A-Z, 0-9 and most symbols are supported (see [characters.hpp](firmware/src/characters.hpp)). Easy-to-read source code. 
 
 There are also 4 buttons for up/down/left/right navigation, and finally a reset button for the ESP8266 programming. Hold the **down** button, then press reset to enter UART **down**load mode. Too cool for serial programming? The CardClock firmware also supports AndroidOTA and most firmware development can be done wirelessly, as long as you don't make the firmware unbootable... if you do, grab your USB-to-serial adapter and reprogram it easily. 
 
