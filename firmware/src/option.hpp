@@ -104,7 +104,7 @@ class TextListOption : public Option {
 
     virtual void End() override {
         if (m_values.size()) {
-            m_settings[GetName()] = GetCurrentValue();
+            ChangeSettingToCurrentValue();
             m_settings.Save();
         }
     }
@@ -116,6 +116,9 @@ class TextListOption : public Option {
 
         m_display.DrawChar(14, CHAR_UP_ARROW, upColor);
         m_display.DrawChar(14, CHAR_DOWN_ARROW, downColor);
+    }
+    virtual void ChangeSettingToCurrentValue() {
+        m_settings[GetName()] = GetCurrentValue();
     }
 };
 
@@ -152,16 +155,18 @@ class RangeOption : public TextListOption {
     virtual void Up() override {
         if (m_index < m_max) {
             m_index++;
+            ChangeSettingToCurrentValue();
         }
     }
     virtual void Down() override {
         if (m_index > m_min) {
             m_index--;
+            ChangeSettingToCurrentValue();
         }
     }
 
     virtual void End() override {
-        m_settings[GetName()] = GetCurrentValue();
+        ChangeSettingToCurrentValue();
         m_settings.Save();
     }
 };
