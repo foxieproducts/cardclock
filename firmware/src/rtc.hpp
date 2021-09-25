@@ -14,6 +14,7 @@ class Rtc {
     Settings& m_settings;
     bool m_isInitialized{false};
     size_t m_millisAtInterrupt{0};
+    uint8_t m_hour{0}, m_minute{0}, m_second{0};
 
     inline static bool m_receivedInterrupt{false};  // used by InterruptISR()
 
@@ -32,19 +33,18 @@ class Rtc {
         // so this forces us to check in with the RTC once a second if it is
         // stuck in that state
         if (m_receivedInterrupt || Millis() >= 1000) {
-            m_rtc.getDateTime();
-            m_receivedInterrupt = false;
             m_millisAtInterrupt = millis();
+            GetTimeFromRTC();
+            m_receivedInterrupt = false;
         }
     }
 
     int Hour() {
-        return m_settings[F("24HR")] == F("ON") ? m_rtc.getHour()
-                                                : Conv24to12(m_rtc.getHour());
+        return m_settings[F("24HR")] == F("ON") ? m_hour : Conv24to12(m_hour);
     }
-    int Hour12() { return Conv24to12(m_rtc.getHour()); }
-    int Minute() { return m_rtc.getMinute(); }
-    int Second() { return m_rtc.getSecond(); }
+    int Hour12() { return Conv24to12(m_hour); }
+    int Minute() { return m_minute; }
+    int Second() { return m_second; }
     int Millis() { return (millis() - m_millisAtInterrupt) % 1000; }
     void SetTime(uint8_t hour, uint8_t minute, uint8_t second) {
         m_rtc.setTime(hour, minute, second);
@@ -87,7 +87,16 @@ class Rtc {
 
             m_isInitialized = true;
             AttachInterrupt();
+
+            GetTimeFromRTC();
         }
+    }
+
+    void GetTimeFromRTC() {
+        m_rtc.getDateTime();
+        m_hour = m_rtc.getHour();
+        m_minute = m_rtc.getMinute();
+        m_second = m_rtc.getSecond();
     }
 
     void AttachInterrupt() {
