@@ -30,4 +30,4 @@ The firmware uses several open-source libraries, including [ESPAsyncWiFiManager]
 
 # [Get your own](https://www.foxieproducts.com/)
 
-Order your own at [foxieproducts.com](https://www.foxieproducts.com/) or at the [Foxie Products store on Tindie](https://www.tindie.com/products/afoxinsocks/foxie-cardclock/).
+Order your own at [foxieproducts.com/products/cardclock](https://www.foxieproducts.com/products/cardclock) or at the [Foxie Products store on Tindie](https://www.tindie.com/products/foxieproducts/foxie-cardclock/).
