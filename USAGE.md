@@ -18,12 +18,16 @@ Normal, Shimmer, Rainbow, Marquee, Marquee Rainbow, Binary, and Binary Shimmer
 
 ## Setting the time
 ---
+Press **left** button to move from Clock to **set time**.
+
 Press left/right to switch between setting the hour, minute, or second.
 Press up/down to increase or decrease the value. Hold the button down to move toward a value more quickly.
 To exit, either wait 5 seconds or move to the seconds value and press the right button to move back to the Clock screen.
 
 ## Configuring settings
 ---
+Press **right** button to move from Clock to **configure settings**.
+
 Press the up/down buttons to move through the list of settings. The ring LEDs will display the position in the list.
 Press the right button to select a setting, then press the up/down buttons to change the value.
 To exit, either wait 5 seconds or press the left button to move back to the Clock screen.
