@@ -4,7 +4,7 @@
 
 ## A smart, colorful, credit card sized clock
 
-This is the Foxie CardClock, an open-source GPLv3/CC/CERN, ESP8266-powered, WiFi-enabled, RTC-havin', super-capacitor havin', analog+digital, LED-laden, clock. The firmware is also able to self-update from the web, so improvements to this firmware can make their way to everyone's clocks.
+This is the Foxie CardClock, a certified Open Hardware ([OSHW US002055](https://certification.oshwa.org/us002055.html)) ESP8266-powered, WiFi-enabled, RTC-havin', super-capacitor havin', analog+digital, LED-laden, clock. The firmware is also able to self-update from the web, so improvements to this firmware can make their way to everyone's clocks.
 
 There are 2 rings of 12 LEDs at the top of the PCB, which are used to display Hours, Minutes and Seconds. The Minutes and Seconds display with a 5 minute/second resolution.
 
