@@ -49,6 +49,7 @@ class Rtc {
     void SetTime(uint8_t hour, uint8_t minute, uint8_t second) {
         m_rtc.setTime(hour, minute, second);
         m_millisAtInterrupt = millis();
+        GetTimeFromRTC();
     }
     int Conv24to12(int hour) {
         if (hour > 12) {
