@@ -59,7 +59,7 @@ void setup() {
     });
     configMenu->AddRunFuncSetting(F("VER"), [&]() {
         display->DrawTextScrolling(F("FC/OS v") + String(FW_VERSION) +
-                                       F(" and may the schwarz be with you!"),
+                                       F(" and may the schwartz be with you!"),
                                    PURPLE);
     });
     configMenu->AddTextSetting(F("DEVL"), {F("OFF"), F("ON")});
