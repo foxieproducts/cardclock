@@ -13,7 +13,7 @@ class Rtc {
     Rtc_Pcf8563 m_rtc;
     Settings& m_settings;
     bool m_isInitialized{false};
-    size_t m_millisAtInterrupt{0};
+    unsigned long m_millisAtInterrupt{0};
     uint8_t m_hour{0}, m_minute{0}, m_second{0};
 
     inline static bool m_receivedInterrupt{false};  // used by InterruptISR()
@@ -32,8 +32,7 @@ class Rtc {
         // occasionally seems to get confused and send interrupts once a minute,
         // so this forces us to check in with the RTC once a second if it is
         // stuck in that state
-        if (m_receivedInterrupt || Millis() >= 1000) {
-            m_millisAtInterrupt = millis();
+        if (m_receivedInterrupt || Millis() > 1000) {
             GetTimeFromRTC();
             m_receivedInterrupt = false;
         }
@@ -48,7 +47,6 @@ class Rtc {
     int Millis() { return (millis() - m_millisAtInterrupt) % 1000; }
     void SetTime(uint8_t hour, uint8_t minute, uint8_t second) {
         m_rtc.setTime(hour, minute, second);
-        m_millisAtInterrupt = millis();
         GetTimeFromRTC();
     }
     int Conv24to12(int hour) {
@@ -97,7 +95,10 @@ class Rtc {
         m_rtc.getDateTime();
         m_hour = m_rtc.getHour();
         m_minute = m_rtc.getMinute();
-        m_second = m_rtc.getSecond();
+        if (m_second != m_rtc.getSecond()) {
+            m_millisAtInterrupt = millis();
+            m_second = m_rtc.getSecond();
+        }
     }
 
     void AttachInterrupt() {
