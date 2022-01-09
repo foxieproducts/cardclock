@@ -328,7 +328,7 @@ class Clock : public Menu {
             // the forceColor parameter is used here for the secondHand so that
             // it doesn't flicker
             m_display.DrawSecondLEDs(m_rtc.Second(), secondColor, true);
-            m_display.DrawHourLED(m_rtc.Hour(), hourAndMinuteColor);
+            m_display.DrawHourLED(m_rtc.Hour12(), hourAndMinuteColor);
             m_display.DrawMinuteLED(m_rtc.Minute(), hourAndMinuteColor);
         }
     }
