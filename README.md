@@ -10,7 +10,7 @@ There are 2 rings of 12 LEDs at the top of the PCB, which are used to display Ho
 
 Enter the 17x5 LED matrix, including a library that has functions for drawing characters, scrolling, and more. All A-Z, 0-9 and most symbols are supported (see [characters.hpp](firmware/src/characters.hpp)). Easy-to-read source code. 
 
-There are also 4 buttons for up/down/left/right navigation, and finally a reset button for the ESP8266 programming. Hold the **down** button, then press reset to enter UART **down**load mode. Too cool for serial programming? The CardClock firmware also supports AndroidOTA and most firmware development can be done wirelessly, as long as you don't make the firmware unbootable... if you do, grab your USB-to-serial adapter and reprogram it easily. 
+There are also 4 buttons for up/down/left/right navigation, and finally a reset button for the ESP8266 programming. Hold the **down** button, then press reset to enter UART **down**load mode. Too cool for serial programming? The CardClock firmware also supports ArduinoOTA and most firmware development can be done wirelessly, as long as you don't make the firmware unbootable... if you do, grab your USB-to-serial adapter and reprogram it easily. 
 
 There is a light sensor using the ESP8266's single analog input, providing for a smooth experience in brighter and darker environments. Minimum and maximum brightness are also easily adjustable directly on the clock using the menu system.
 
